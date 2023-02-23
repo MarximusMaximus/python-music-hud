@@ -296,226 +296,226 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 nextDivider = "<hr>"
                 nextHeader = ""
 
-            if (
-                not currentTitle or
-                currentPlaylistName not in DISPLAY_SONGS_FOR_PLAYLISTS
-            ):
-                nextNextTitle = nextTitle
-                if not nextNextTitle or nextNextTitle == "-":
-                    nextNextTitle = ""
-                else:
-                    nextNextTitle = "Next: " + nextNextTitle
-                nextTitle = currentTitle
-                if nextTitle:
-                    nextTitle = "<br/><br/><br/><br/><br/><br/><br/>Currently Playing: " + nextTitle + "<br/>" + nextNextTitle
-                else:
-                    nextTitle = ""
+        if (
+            not currentTitle or
+            currentPlaylistName not in DISPLAY_SONGS_FOR_PLAYLISTS
+        ):
+            nextNextTitle = nextTitle
+            if not nextNextTitle or nextNextTitle == "-":
                 nextNextTitle = ""
-
-                currentTitle = "<div class=\"bigTitle\"><br/>Mark<br/>&<br/>Sherry<br/>Wedding</div>"
-                currentArtist = ""
-                currentPositionAndLengthPretty = ""
-                currentDanceStyleHeader = ""
-                currentStyle = ""
-
-                nextArtist = ""
-                nextStyle = ""
-                nextLengthPretty = ""
-                nextDanceStyleHeader = ""
-                nextDivider = ""
-                nextHeader = ""
-
-                nextNextComment = ""
-                nextNextLengthPretty = ""
-                nextNextHeader = ""
             else:
-                currentTitle = "<div class=\"title\">" + currentTitle + "</div>"
+                nextNextTitle = "Next: " + nextNextTitle
+            nextTitle = currentTitle
+            if nextTitle:
+                nextTitle = "<br/><br/><br/><br/><br/><br/><br/>Currently Playing: " + nextTitle + "<br/>" + nextNextTitle
+            else:
+                nextTitle = ""
+            nextNextTitle = ""
+
+            currentTitle = "<div class=\"bigTitle\"><br/>Mark<br/>&<br/>Sherry<br/>Wedding</div>"
+            currentArtist = ""
+            currentPositionAndLengthPretty = ""
+            currentDanceStyleHeader = ""
+            currentStyle = ""
+
+            nextArtist = ""
+            nextStyle = ""
+            nextLengthPretty = ""
+            nextDanceStyleHeader = ""
+            nextDivider = ""
+            nextHeader = ""
+
+            nextNextComment = ""
+            nextNextLengthPretty = ""
+            nextNextHeader = ""
+        else:
+            currentTitle = "<div class=\"title\">" + currentTitle + "</div>"
 
 
-            realTime = datetime_datetime.now().strftime("%-I:%M:%S %p")
+        realTime = datetime_datetime.now().strftime("%-I:%M:%S %p")
 
-            message = (
-                f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                <html lang="en">
-                <meta http-equiv="refresh" content="1" />
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-                <style>
-                    body {{
-                        font-family: Big Caslon, -system, -system-font, Arial;
-                        background-color: {BGCOLOR};
-                        color: rgba({FGCOLOR}, 1);
-                    }}
+        message = (
+            f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <html lang="en">
+            <meta http-equiv="refresh" content="1" />
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+            <style>
+                body {{
+                    font-family: Big Caslon, -system, -system-font, Arial;
+                    background-color: {BGCOLOR};
+                    color: rgba({FGCOLOR}, 1);
+                }}
 
-                    body table {{
-                        margin: 0;
-                        margin-left: 1%;
-                        margin-right: 1%;
-                    }}
+                body table {{
+                    margin: 0;
+                    margin-left: 1%;
+                    margin-right: 1%;
+                }}
 
-                    ul {{
-                        -webkit-column-count: 2;
-                        margin: 0;
-                        margin-left: 0.5em;
-                    }}
+                ul {{
+                    -webkit-column-count: 2;
+                    margin: 0;
+                    margin-left: 0.5em;
+                }}
 
-                    li {{
-                        margin-left: 0.5em;
-                    }}
+                li {{
+                    margin-left: 0.5em;
+                }}
 
-                    hr {{
-                        border: 1px;
-                        border-style: solid;
-                        margin-top: 20px;
-                        margin-bottom: 20px;
-                    }}
+                hr {{
+                    border: 1px;
+                    border-style: solid;
+                    margin-top: 20px;
+                    margin-bottom: 20px;
+                }}
 
-                    .bottom {{
-                        position: absolute;
-                        top: 600px;
-                        width: 1900px;
-                    }}
-                    .bottom-right {{
-                        position: absolute;
-                        top: 646px;
-                        left: 1000px;
-                        width: 800px;
-                    }}
+                .bottom {{
+                    position: absolute;
+                    top: 600px;
+                    width: 1900px;
+                }}
+                .bottom-right {{
+                    position: absolute;
+                    top: 646px;
+                    left: 1000px;
+                    width: 800px;
+                }}
 
-                    .currentTitle {{
-                        font-size: 4vw;
-                    }}
-                    .currentTitle div.title {{
-                        width: 68%;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }}
-                    .currentTitle div.time {{
-                        position: absolute;
-                        top: 1%;
-                        right: 1%;
-                    }}
-                    .currentArtist {{
-                        font-size: 2vw;
-                        color: rgba({FGCOLOR}, 0.8);
-                    }}
-                    .currentStyleHeader {{
-                        font-size: 2vw;
-                        color: rgba({FGCOLOR}, 0.8);
-                    }}
-                    .currentStyle {{
-                        font-size: 4.2vw;
-                    }}
+                .currentTitle {{
+                    font-size: 4vw;
+                }}
+                .currentTitle div.title {{
+                    width: 68%;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }}
+                .currentTitle div.time {{
+                    position: absolute;
+                    top: 1%;
+                    right: 1%;
+                }}
+                .currentArtist {{
+                    font-size: 2vw;
+                    color: rgba({FGCOLOR}, 0.8);
+                }}
+                .currentStyleHeader {{
+                    font-size: 2vw;
+                    color: rgba({FGCOLOR}, 0.8);
+                }}
+                .currentStyle {{
+                    font-size: 4.2vw;
+                }}
 
-                    table.nextTable {{
-                        color: rgba({FGCOLOR}, 0.7);
-                    }}
+                table.nextTable {{
+                    color: rgba({FGCOLOR}, 0.7);
+                }}
 
-                    table.nextNextTable {{
-                        font-size: 1.5vw;
-                        color: rgba({FGCOLOR}, 0.7);
-                    }}
+                table.nextNextTable {{
+                    font-size: 1.5vw;
+                    color: rgba({FGCOLOR}, 0.7);
+                }}
 
-                    .headerNext {{
-                        font-size: 2.5vw;
-                    }}
-                    .nextTitle {{
-                        font-size: 2vw;
-                    }}
-                    .nextArtist {{
-                        font-size: 1.5vw;
-                    }}
-                    .nextStyleHeader {{
-                        font-size: 1.5vw;
-                    }}
-                    .nextStyle {{
-                        font-size: 2vw;
-                    }}
+                .headerNext {{
+                    font-size: 2.5vw;
+                }}
+                .nextTitle {{
+                    font-size: 2vw;
+                }}
+                .nextArtist {{
+                    font-size: 1.5vw;
+                }}
+                .nextStyleHeader {{
+                    font-size: 1.5vw;
+                }}
+                .nextStyle {{
+                    font-size: 2vw;
+                }}
 
-                    div.realTime {{
-                        position: absolute;
-                        bottom: 1%;
-                        right: 1%;
-                        font-size: 4vw;
-                        color: rgba({FGCOLOR}, 0.4);
-                    }}
+                div.realTime {{
+                    position: absolute;
+                    bottom: 1%;
+                    right: 1%;
+                    font-size: 4vw;
+                    color: rgba({FGCOLOR}, 0.4);
+                }}
 
-                    div.bigTitle {{
-                        font-size: 7.5vw;
-                        text-align: center;
-                        width: 100%;
-                    }}
-                </style>
-                </head>
-                <body><div max-width="100%">
-                    <table width="98%">
-                        <tr><td class="currentTitle">
-                            <div class="time">{currentPositionAndLengthPretty}</div>
-                            {currentTitle}
+                div.bigTitle {{
+                    font-size: 7.5vw;
+                    text-align: center;
+                    width: 100%;
+                }}
+            </style>
+            </head>
+            <body><div max-width="100%">
+                <table width="98%">
+                    <tr><td class="currentTitle">
+                        <div class="time">{currentPositionAndLengthPretty}</div>
+                        {currentTitle}
+                    </td></tr>
+                </table>
+                <table width="98%">
+                    <tr><td class="currentArtist">
+                        {currentArtist}
+                    </td></tr>
+                    <tr><td class="currentStyleHeader">
+                        {currentDanceStyleHeader}
+                    </td></tr>
+                    <tr><td class="currentStyle">
+                        <ul>
+                            {currentStyle}
+                        </ul>
+                    </td></tr>
+                </table>
+                <div class="bottom">
+                    {nextDivider}
+                    <table class="nextTable">
+                        <tr>
+                            <td class="headerNext">
+                                {nextHeader}
+                            </td>
+                        </tr>
+                        <tr><td class="nextTitle">
+                            {nextTitle} {nextLengthPretty}
                         </td></tr>
-                    </table>
-                    <table width="98%">
-                        <tr><td class="currentArtist">
-                            {currentArtist}
+                        <tr><td class="nextArtist">
+                            {nextArtist}
                         </td></tr>
-                        <tr><td class="currentStyleHeader">
-                            {currentDanceStyleHeader}
+                        <tr><td class="nextStyleHeader">
+                            {nextDanceStyleHeader}
                         </td></tr>
-                        <tr><td class="currentStyle">
+                        <tr><td class="nextStyle">
                             <ul>
-                                {currentStyle}
+                                {nextStyle}
                             </ul>
                         </td></tr>
                     </table>
-                    <div class="bottom">
-                        {nextDivider}
-                        <table class="nextTable">
-                            <tr>
-                                <td class="headerNext">
-                                    {nextHeader}
-                                </td>
-                            </tr>
-                            <tr><td class="nextTitle">
-                                {nextTitle} {nextLengthPretty}
-                            </td></tr>
-                            <tr><td class="nextArtist">
-                                {nextArtist}
-                            </td></tr>
-                            <tr><td class="nextStyleHeader">
-                                {nextDanceStyleHeader}
-                            </td></tr>
-                            <tr><td class="nextStyle">
-                                <ul>
-                                    {nextStyle}
-                                </ul>
-                            </td></tr>
-                        </table>
-                    </div>
-                    <div class="bottom-right">
-                        <table class="nextNextTable">
-                            <tr>
-                                <td>
-                                    {nextNextHeader} {nextNextTitle} {nextNextLengthPretty} {nextNextComment}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="realTime">
-                        {realTime}
-                    </div>
-                </div></body>
-                </html>
-                """
-            )
+                </div>
+                <div class="bottom-right">
+                    <table class="nextNextTable">
+                        <tr>
+                            <td>
+                                {nextNextHeader} {nextNextTitle} {nextNextLengthPretty} {nextNextComment}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="realTime">
+                    {realTime}
+                </div>
+            </div></body>
+            </html>
+            """
+        )
 
-            message = message.encode("utf8", errors="ignore")
-            self.send_response(200)
-            self.end_headers()
-            _ = self.wfile.write(message)
-            return
+        message = message.encode("utf8", errors="ignore")
+        self.send_response(200)
+        self.end_headers()
+        _ = self.wfile.write(message)
+        return
 
 
 
