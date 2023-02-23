@@ -153,11 +153,9 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         else:
             currentTrack = appAppleMusic.currentTrack()  # type: ignore[reportGeneralTypesIssues]
             currentTitle = currentTrack.name()
-            # if currentTitle is not None:
-            #     currentTitle = currentTitle.encode("utf8", "ignore")
             currentArtist = currentTrack.artist()
             if currentArtist is not None:
-                currentArtist = "by " + currentArtist  #currentArtist.encode("utf8", "ignore")
+                currentArtist = "by " + currentArtist
             currentComment = currentTrack.comment()
             currentStyle = commentToStyle(currentComment)
             currentIndex = currentTrack.index()
@@ -195,11 +193,9 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             if nextIndex <= playlistTracks.count():
                 nextTrack = playlistTracks[nextIndex - 1]  # b/c it's stupid.
                 nextTitle = nextTrack.name()
-                # if nextTitle is not None:
-                #     nextTitle = nextTitle.encode("utf8", "ignore")
                 nextArtist = nextTrack.artist()
                 if nextArtist is not None:
-                    nextArtist = "by " + nextArtist  #nextArtist.encode("utf8", "ignore")
+                    nextArtist = "by " + nextArtist
                 nextComment = nextTrack.comment()
                 nextStyle = commentToStyle(nextComment)
 
@@ -226,8 +222,6 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             if nextNextIndex <= playlistTracks.count():
                 nextNextTrack = playlistTracks[nextNextIndex - 1]  # b/c it's stupid.
                 nextNextTitle = nextNextTrack.name()
-                # if nextNextTitle is not None:
-                #     nextNextTitle = nextNextTitle.encode("utf8", "ignore")
 
                 nextNextComment = nextNextTrack.comment()
                 if nextNextComment is not None:
