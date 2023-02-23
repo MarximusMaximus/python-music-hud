@@ -24,7 +24,10 @@ from typing import (
 )
 
 appAppleMusic = SBApplication.applicationWithBundleIdentifier_("com.apple.Music")  # type: ignore[reportGeneralTypesIssues]
+appSpotify = SBApplication.applicationWithBundleIdentifier_("com.spotify.client")  # type: ignore[reportGeneralTypesIssues]
 
+STATE_PLAYING = 1800426320
+STATE_STOPPED = 1800426352
 
 SERVER_PORT = 8080
 
@@ -53,6 +56,7 @@ SECRET_TITLES = [
 ]
 
 DISPLAY_SONGS_FOR_PLAYLISTS = [
+    "SPOTIFY",
     "9 Pre Dance - 30m (6:30p)",
     "10 Main Dance - 1h (8p)",
     "11 Extra Dance - 1h (?)",
@@ -133,7 +137,11 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         currentStyle: str | None = ""
         currentStart: int = 0
         currentEnd: int = 0
-        currentPlayerPosition: int = 0
+        currentLengthSeconds: int = 0
+        currentLengthInSeconds: int = 0
+        currentPlayerPositionAsFloat: float = 0
+        currentPlayerPositionInSeconds: int = 0
+        currentPlaylistName: str = ""
 
         nextTitle: str | None = ""
         nextArtist: str | None = ""
@@ -150,11 +158,12 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
         if real_path == "/STOP_SERVER":
             return
-        else:
+        elif appAppleMusic is not None and appAppleMusic.isRunning() and appAppleMusic.playerState() == STATE_PLAYING:  # type: ignore[reportGeneralTypesIssues]
+            print("getting info from Apple Music App")
             currentTrack = appAppleMusic.currentTrack()  # type: ignore[reportGeneralTypesIssues]
             currentTitle = currentTrack.name()
             currentArtist = currentTrack.artist()
-            if currentArtist is not None:
+            if currentArtist:
                 currentArtist = "by " + currentArtist
             currentComment = currentTrack.comment()
             currentStyle = commentToStyle(currentComment)
@@ -162,14 +171,14 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
             currentStart = currentTrack.start()
             currentEnd = currentTrack.finish()
-            currentLengthSeconds = int(currentEnd - currentStart)
+            currentLengthInSeconds = int(currentEnd - currentStart)
 
-            currentLengthMinutes = int(currentLengthSeconds / 60)
-            currentLengthSeconds = int(currentLengthSeconds % 60)
+            currentLengthMinutes = int(currentLengthInSeconds / 60)
+            currentLengthSeconds = int(currentLengthInSeconds % 60)
             currentLengthPretty = "{:d}:{:02d}".format(currentLengthMinutes, currentLengthSeconds)
 
-            currentPlayerPosition = appAppleMusic.playerPosition()  # type: ignore[reportGeneralTypesIssues]
-            currentAdjustedPlayerPosition = max(currentPlayerPosition - currentStart, 0)
+            currentPlayerPositionInSeconds = appAppleMusic.playerPosition()  # type: ignore[reportGeneralTypesIssues]
+            currentAdjustedPlayerPosition = max(currentPlayerPositionInSeconds - currentStart, 0)
             currentPositionMinutes = int(currentAdjustedPlayerPosition / 60)
             currentPositionSeconds = int(currentAdjustedPlayerPosition % 60)
             currentPositionPretty = "{:d}:{:02d}".format(currentPositionMinutes, currentPositionSeconds)
@@ -295,6 +304,31 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 nextDanceStyleHeader = ""
                 nextDivider = "<hr>"
                 nextHeader = ""
+        elif appSpotify is not None and appSpotify.isRunning() and appSpotify.playerState() == STATE_PLAYING:  # type: ignore[reportGeneralTypesIssues]
+            print("getting info from Spotify App")
+            currentPlaylistName = "SPOTIFY"
+
+            currentTrack = appSpotify.currentTrack()  # type: ignore[reportGeneralTypesIssues]
+            currentTitle = currentTrack.name()
+            currentArtist = currentTrack.artist()
+            if currentArtist:
+                currentArtist = "by " + currentArtist
+
+            currentLengthInSeconds = currentTrack.duration() // 1000
+
+            currentLengthMinutes = int(currentLengthInSeconds / 60)
+            currentLengthSeconds = int(currentLengthInSeconds % 60)
+            currentLengthPretty = "{:d}:{:02d}".format(currentLengthMinutes, currentLengthSeconds)
+
+            currentPlayerPositionAsFloat = appSpotify.playerPosition()  # type: ignore[reportGeneralTypesIssues]
+            currentAdjustedPlayerPosition = int(currentPlayerPositionAsFloat)
+            currentPositionMinutes = int(currentAdjustedPlayerPosition / 60)
+            currentPositionSeconds = int(currentAdjustedPlayerPosition % 60)
+            currentPositionPretty = "{:d}:{:02d}".format(currentPositionMinutes, currentPositionSeconds)
+
+            currentPositionAndLengthPretty = "{}/{}".format(currentPositionPretty, currentLengthPretty)
+        else:
+            print("no music app playing")
 
         if (
             not currentTitle or
