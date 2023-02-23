@@ -1,8 +1,8 @@
 # /bin/env python
 
-from BaseHTTPServer import (
-    HTTPServer                      as BaseHTTPServer_HTTPServer,
-    BaseHTTPRequestHandler          as BaseHTTPServer_BaseHTTPRequestHandler,
+from http.server import (
+    HTTPServer                      as http_server_HTTPServer,
+    BaseHTTPRequestHandler          as http_server_BaseHTTPRequestHandler,
 )
 
 from Foundation import *
@@ -11,15 +11,15 @@ from ScriptingBridge import *
 from threading import (
     Thread                          as threading_Thread,
 )
-from urlparse import (
-    urlparse                        as urlparse_urlparse,
+from urllib.parse import (
+    urlparse                        as urllib_parse_urlparse,
 )
 
 from datetime import (
     datetime                            as datetime_datetime,
 )
 
-iTunes = SBApplication.applicationWithBundleIdentifier_("com.apple.iTunes")
+appAppleMusic = SBApplication.applicationWithBundleIdentifier_("com.apple.Music")
 
 
 SERVER_PORT = 8080
@@ -41,7 +41,8 @@ def commentToStyle(comment):
     return ret
 
 SECRET_TITLES = [
-
+    "Sherry",
+    "Never Gonna Give You Up (7\" Mix)",
 ]
 
 DISPLAY_SONGS_FOR_PLAYLISTS = [
@@ -51,13 +52,15 @@ DISPLAY_SONGS_FOR_PLAYLISTS = [
     "12 Last Call - 30m (9p)",
     "13 GTFO - 30m (9:30p)",
     "14 Cleanup - 2h (10:15p)",
+    "5a Dance (8:10p, <3h)",
+    "5b Last Dances (10:45pm)",
 ]
 
 GAP_SILENCE_TITLE = "----- 30 Minutes of Silence -----"
 
 LAST_CALL_TITLE = "Last Call (One Bourbon, One Scotch, One Beer)"
 
-LAST_DANCE_TITLE = "Exterminate Annihilate Destroy"
+LAST_DANCE_TITLE = "(I've Had) The Time of My Life"
 
 #===================================================================================================================
 class Server(object):
@@ -82,15 +85,15 @@ class Server(object):
 
     #---------------------------------------------------------------------------------------------------------------
     def serverThread(self, handlerCls):
-        print "starting server"
+        print("starting server")
 
-        server = BaseHTTPServer_HTTPServer(('localhost', SERVER_PORT), handlerCls)
+        server = http_server_HTTPServer(('localhost', SERVER_PORT), handlerCls)
 
         while self.keepRunning:
             server.handle_request()
         server.server_close()
 
-        print "server closed"
+        print("server closed")
 
     #---------------------------------------------------------------------------------------------------------------
     def stopServer(self):
@@ -101,28 +104,28 @@ class Server(object):
 
 #===================================================================================================================
 # noinspection PyClassHasNoInit
-class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
+class GenericHandler(http_server_BaseHTTPRequestHandler):
 
     #---------------------------------------------------------------------------------------------------------------
     def do_GET(self):
-        parsed_path = urlparse_urlparse(self.path)
+        parsed_path = urllib_parse_urlparse(self.path)
         real_path = parsed_path.path
         headers = self.headers
 
         if real_path == "/STOP_SERVER":
             return
         else:
-            currentTrack = iTunes.currentTrack()
+            currentTrack = appAppleMusic.currentTrack()
             currentTitle = currentTrack.name()
-            if currentTitle is not None:
-                currentTitle = currentTitle.encode("utf8", "ignore")
+            # if currentTitle is not None:
+            #     currentTitle = currentTitle.encode("utf8", "ignore")
             currentArtist = currentTrack.artist()
             if currentArtist is not None:
-                currentArtist = "by " + currentArtist.encode("utf8", "ignore")
+                currentArtist = "by " + currentArtist  #currentArtist.encode("utf8", "ignore")
             currentComment = currentTrack.comment()
             currentStyle = commentToStyle(currentComment)
             currentIndex = currentTrack.index()
-            
+
             currentStart = currentTrack.start()
             currentEnd = currentTrack.finish()
             currentLengthSeconds = int(currentEnd - currentStart)
@@ -131,7 +134,7 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
             currentLengthSeconds = int(currentLengthSeconds % 60)
             currentLengthPretty = "{:d}:{:02d}".format(currentLengthMinutes, currentLengthSeconds)
 
-            currentPlayerPosition = iTunes.playerPosition()
+            currentPlayerPosition = appAppleMusic.playerPosition()
             currentAdjustedPlayerPosition = max(currentPlayerPosition - currentStart, 0)
             currentPositionMinutes = int(currentAdjustedPlayerPosition / 60)
             currentPositionSeconds = int(currentAdjustedPlayerPosition % 60)
@@ -139,7 +142,7 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
 
             currentPositionAndLengthPretty = "{}/{}".format(currentPositionPretty, currentLengthPretty)
 
-            currentPlaylist = iTunes.currentPlaylist()
+            currentPlaylist = appAppleMusic.currentPlaylist()
             playlistTracks = currentPlaylist.tracks()
 
             currentDanceStyleHeader = "Dance Style Info:"
@@ -156,22 +159,22 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
             if nextIndex <= playlistTracks.count():
                 nextTrack = playlistTracks[nextIndex - 1]  # b/c it's stupid.
                 nextTitle = nextTrack.name()
-                if nextTitle is not None:
-                    nextTitle = nextTitle.encode("utf8", "ignore")
+                # if nextTitle is not None:
+                #     nextTitle = nextTitle.encode("utf8", "ignore")
                 nextArtist = nextTrack.artist()
                 if nextArtist is not None:
-                    nextArtist = "by " + nextArtist.encode("utf8", "ignore")
+                    nextArtist = "by " + nextArtist  #nextArtist.encode("utf8", "ignore")
                 nextComment = nextTrack.comment()
                 nextStyle = commentToStyle(nextComment)
 
                 if nextTitle in SECRET_TITLES:
                     nextTitle = "*****"
                     nextArtist = "*****"
-                
+
                 nextStart = nextTrack.start()
                 nextEnd = nextTrack.finish()
                 nextLengthSeconds = int(nextEnd - nextStart)
-    
+
                 nextLengthMinutes = int(nextLengthSeconds / 60)
                 nextLengthSeconds = int(nextLengthSeconds % 60)
                 nextLengthPretty = " - {:d}:{:02d}".format(nextLengthMinutes, nextLengthSeconds)
@@ -188,9 +191,9 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
             if nextNextIndex <= playlistTracks.count():
                 nextNextTrack = playlistTracks[nextNextIndex - 1]  # b/c it's stupid.
                 nextNextTitle = nextNextTrack.name()
-                if nextNextTitle is not None:
-                    nextNextTitle = nextNextTitle.encode("utf8", "ignore")
-                
+                # if nextNextTitle is not None:
+                #     nextNextTitle = nextNextTitle.encode("utf8", "ignore")
+
                 nextNextComment = nextNextTrack.comment()
                 if nextNextComment is not None:
                     nextNextComment = nextNextComment.split(";")[0]
@@ -201,11 +204,11 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                         .replace("ECS", "East Coast Swing, Jitterbug")\
                         .replace("WCS", "West Coast Swing")
 
-                
+
                 nextNextStart = nextNextTrack.start()
                 nextNextEnd = nextNextTrack.finish()
                 nextNextLengthSeconds = int(nextNextEnd - nextNextStart)
-    
+
                 nextNextLengthMinutes = int(nextNextLengthSeconds / 60)
                 nextNextLengthSeconds = int(nextNextLengthSeconds % 60)
                 nextNextLengthPretty = " - {:d}:{:02d}".format(nextNextLengthMinutes, nextNextLengthSeconds)
@@ -280,12 +283,12 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                     nextNextTitle = "Next: " + nextNextTitle
                 nextTitle = currentTitle
                 if nextTitle:
-                    nextTitle = "<br/><br/><br/><br/><br/><br/><br/>" + nextTitle + "<br/>" + nextNextTitle
+                    nextTitle = "<br/><br/><br/><br/><br/><br/><br/>Currently Playing: " + nextTitle + "<br/>" + nextNextTitle
                 else:
                     nextTitle = ""
                 nextNextTitle = ""
 
-                currentTitle = "<div class=\"bigTitle\"><br/>Laura<br/>&<br/>Jeff<br/>Wedding</div>"
+                currentTitle = "<div class=\"bigTitle\"><br/>Mark<br/>&<br/>Sherry<br/>Wedding</div>"
                 currentArtist = ""
                 currentPositionAndLengthPretty = ""
                 currentDanceStyleHeader = ""
@@ -313,39 +316,39 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                 <!DOCTYPE html>
                 <html>
                 <head>
-                <html lang="en"> 
+                <html lang="en">
                 <meta http-equiv="refresh" content="1" />
                 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
                 <style>
                     body {
                         font-family: Big Caslon, -system, -system-font, Arial;
-                        background-color: #000000;
-                        color: rgba(212,175,55, 1);
+                        background-color: #6E6856;
+                        color: rgba(29,27,22, 1);
                     }
-                
+
                     body table {
                         margin: 0;
                         margin-left: 1%;
                         margin-right: 1%;
                     }
-                
+
                     ul {
                         -webkit-column-count: 2;
                         margin: 0;
                         margin-left: 0.5em;
                     }
-                    
+
                     li {
                         margin-left: 0.5em;
                     }
-                
+
                     hr {
                         border: 1px;
                         border-style: solid;
                         margin-top: 20px;
                         margin-bottom: 20px;
                     }
-                
+
                     .bottom {
                         position: absolute;
                         top: 600px;
@@ -357,7 +360,7 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                         left: 1000px;
                         width: 800px;
                     }
-                
+
                     .currentTitle {
                         font-size: 4vw;
                     }
@@ -374,25 +377,25 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                     }
                     .currentArtist {
                         font-size: 2vw;
-                        color: rgba(212,175,55, 0.8);
+                        color: rgba(29,27,22, 0.8);
                     }
                     .currentStyleHeader {
                         font-size: 2vw;
-                        color: rgba(212,175,55, 0.8);
+                        color: rgba(29,27,22, 0.8);
                     }
                     .currentStyle {
                         font-size: 4.2vw;
                     }
-                    
+
                     table.nextTable {
-                        color: rgba(212,175,55, 0.7);
+                        color: rgba(29,27,22, 0.7);
                     }
-                    
+
                     table.nextNextTable {
                         font-size: 1.5vw;
-                        color: rgba(212,175,55, 0.7);
+                        color: rgba(29,27,22, 0.7);
                     }
-                    
+
                     .headerNext {
                         font-size: 2.5vw;
                     }
@@ -408,17 +411,17 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                     .nextStyle {
                         font-size: 2vw;
                     }
-                    
+
                     div.realTime {
                         position: absolute;
                         bottom: 1%;
                         right: 1%;
                         font-size: 4vw;
-                        color: rgba(212,175,55, 0.4);
+                        color: rgba(29,27,22, 0.4);
                     }
-                    
+
                     div.bigTitle {
-                        font-size: 7.5vw; 
+                        font-size: 7.5vw;
                         text-align: center;
                         width: 100%;
                     }
@@ -488,6 +491,8 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
                     **locals()
                 )
             )
+
+            message = message.encode("utf8", errors="ignore")
             self.send_response(200)
             self.end_headers()
             self.wfile.write(message)
@@ -497,9 +502,9 @@ class GenericHandler(BaseHTTPServer_BaseHTTPRequestHandler):
 
 def main():
 
-    print "starting server"
+    print("starting server")
 
-    server = BaseHTTPServer_HTTPServer(('localhost', SERVER_PORT), GenericHandler)
+    server = http_server_HTTPServer(('localhost', SERVER_PORT), GenericHandler)
 
     while True:
         server.handle_request()
