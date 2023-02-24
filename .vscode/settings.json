@@ -1,4 +1,738 @@
 {
+    "cSpell.words": [
+        "Autobuild",
+        "automount",
+        "backticks",
+        "bdist",
+        "bootstrapper",
+        "cmake",
+        "cmakelint",
+        "codeql",
+        "conda",
+        "configurer",
+        "Cookiecutter",
+        "curlylint",
+        "cython",
+        "delenv",
+        "detailyang",
+        "DISTRO",
+        "docstrings",
+        "endregion",
+        "fatals",
+        "FGCOLOR",
+        "fmask",
+        "fspath",
+        "gitlint",
+        "goanpeca",
+        "GTFO",
+        "hackebrot",
+        "HKEY",
+        "htmlcov",
+        "isort",
+        "Jenkinsfile",
+        "luacheck",
+        "makepyfile",
+        "makepyprojecttoml",
+        "markdownlint",
+        "Marximus",
+        "Maximus",
+        "miniconda",
+        "miniforge",
+        "mkdir",
+        "monkeypatched",
+        "mypy",
+        "ncipollo",
+        "nextline",
+        "ngmodel",
+        "ngrepeat",
+        "noahsark",
+        "nobranch",
+        "nodefaults",
+        "nodeid",
+        "noprofile",
+        "noqa",
+        "norc",
+        "numcollected",
+        "pipefail",
+        "posix",
+        "postamble",
+        "prevline",
+        "printenv",
+        "pssth",
+        "psutil",
+        "purebasename",
+        "pybojc",
+        "pydocstyle",
+        "pygments",
+        "pygrep",
+        "pyjson",
+        "pylint",
+        "pypa",
+        "pyparsing",
+        "pypi",
+        "pyproject",
+        "pyright",
+        "pytest",
+        "pytester",
+        "RDONLY",
+        "runneradmin",
+        "sanitise",
+        "sdist",
+        "setenv",
+        "setuptools",
+        "shellcheck",
+        "shfmt",
+        "SIGHUP",
+        "SIGTERM",
+        "Slurper",
+        "softlinks",
+        "stylua",
+        "subpackage",
+        "superdebug",
+        "teetty",
+        "tempdir",
+        "tput",
+        "trackby",
+        "typeguard",
+        "ULTRADEBUG",
+        "urlencode",
+        "whitespaces",
+        "Windowsy",
+        "WSL's",
+        "WSLENV",
+        "xcodeproj",
+        "xdist",
+        "XTRACEFD"
+    ],
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.associations": {
+        "LICENSE": "plaintext",
+        "setup.cfg": "ini",
+        ".coveragerc": "ini",
+    },
+    "editor.insertSpaces": true,
+    "editor.showFoldingControls": "always",
+    "editor.tabSize": 4,
+    "python.disableInstallationCheck": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "shell-syntax.defaultShell": "sh",
+    "better-comments.highlightPlainText": true,
+    "better-comments.tags": [
+        {
+            "tag": "NOTE:",
+            "color": "#98C379",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "WARNING:",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "HACK:",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "QUESTION:",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "TODO:",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "noqa: ",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "noqa:",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "noqa",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "type: ignore[",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "type: ignore",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pragma: no branch",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pragma: nobranch",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pragma: no cover",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pragma: nocover",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "shellcheck disable=",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "shellcheck source=",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "shellcheck",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "nosec",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "mypy: ignore-errors=",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "mypy: ignore-errors",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "flake8: noqa=",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "flake8: noqa",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pylint: disable=all",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pylint: disable=",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pylint: disable",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "cspell:disable-line",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "cspell:disable-next-line",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "spellchecker: disable",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "spellchecker: enable",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "#####",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#000000",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "=====",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#333333",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "-----",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#666666",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": ".....",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#999999",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "_____",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#BBBBBB",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "+++++",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#BBBBBB",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "~~~~~",
+            "color": "#DDDDDD",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#BBBBBB",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "endregion ",
+            "color": "#7F7F7F",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "#000000",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "region ",
+            "color": "#009900",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+    ],
+    "coverage-gutters.showLineCoverage": true,
+    "coverage-gutters.showRulerCoverage": true,
+    "koverage.coverageFileNames": [
+        "lcov.info",
+        // "cov.xml",
+        // "coverage.xml",
+        // "jacoco.xml"
+    ],
+    "koverage.sufficientCoverageThreshold": 100,
+    "koverage.coverageFilePaths": [
+        ".",
+    ],
+    "livePreview.defaultPreviewPath": "/htmlcov/index.html",
+    "esbonio.sphinx.confDir": "",
+    "python.linting.flake8Path": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/flake8",
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8CategorySeverity.W": "Error",
+    "python.linting.flake8Args": [
+        "--config=./.flake8"
+    ],
+    "taskExplorer.exclude": [
+        "**/.vscode-test/**",
+        // "**/bin/**",
+        "**/src/**",
+        "**/build/**",
+        "**/CompiledOutput/**",
+        "**/dist/**",
+        "**/doc/**",
+        "**/ext/**",
+        "**/out/**",
+        "**/output/**",
+        "**/packages/**",
+        "**/release/**",
+        "**/releases/**",
+        "**/samples/**",
+        "**/sdks/**",
+        "**/static/**",
+        "**/target/**",
+        "**/test/**",
+        "**/third_party/**",
+        "**/vendor/**",
+        "**/work/**",
+        "**/tests/**",
+        "**/.tox/**"
+    ],
+    "python.linting.mypyCategorySeverity.note": "Warning",
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyPath": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/mypy",
+    "python.linting.pycodestyleCategorySeverity.W": "Error",
+    "python.poetryPath": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/poetry",
+    "autoDocstring.includeExtendedSummary": false,
+    "autoDocstring.includeName": false,
+    "autoDocstring.startOnNewLine": true,
+    "shellcheck.useWorkspaceRootAsCwd": true,
+    "python.linting.mypyArgs": [
+        // "--follow-imports=silent",
+        // "--show-column-numbers",
+        "--no-pretty",
+        // "--strict",
+        // "--show-error-context",
+        // "--show-error-codes"
+    ],
+    "todo-tree.filtering.excludeGlobs": [
+        "**/node_modules",
+    ],
+    "python.defaultInterpreterPath": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/python",
+    "search.exclude": {
+        "**/__pycache__": true,
+        "**/.git": true,
+        "**/.mypy_cache": true,
+        "**/.tox": true,
+        "**/coverage": true,
+        "**/coverage.xml": true,
+        "**/htmlcov": true,
+        "**/poetry.lock": true
+    },
+    "coverage-gutters.coverageReportFileName": "htmlcov/index.html",
+    "coverage-gutters.coverageFileNames": [
+        "lcov.info",
+        // "cov.xml",
+        // "coverage.xml",
+        // "jacoco.xml",
+        // "coverage.cobertura.xml"
+    ],
+    "region-viewer.markers-overrides": {
+        "gitconfig": {
+            "start": "^\\s*#?region\\b(?<name>.*)", // <name> will be used to to give the region a name
+            "end": "^\\s*#?endregion\\b"
+        },
+    },
+    "coverage-gutters.coverageBaseDir": ".",
+    "python.linting.pylintEnabled": true,
+    "python.linting.banditEnabled": true,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.logLevel": "Error",
+    "python.analysis.diagnosticSeverityOverrides": {
+        // strict settings, from https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+        // NOTE: Changes here need to be propagated to pyproject.toml.
+        "strictListInference": true,
+        "strictDictionaryInference": true,
+        "strictSetInference": true,
+        "strictParameterNoneValue": true,
+        "enableTypeIgnoreComments": true,
+        "reportMissingModuleSource": "error",  // was "warning"
+        "reportMissingImports": "error",
+        "reportUndefinedVariable": "error",
+        "reportAssertAlwaysTrue": "error",
+        "reportInvalidStringEscapeSequence": "error",
+        "reportInvalidTypeVarUse": "error",
+        "reportMissingTypeStubs": "error",
+        "reportSelfClsParameterName": "error",
+        "reportUnsupportedDunderAll": "error",
+        "reportUnusedExpression": "error",
+        "reportWildcardImportFromLibrary": "error",
+        "reportGeneralTypeIssues": "error",
+        "reportOptionalSubscript": "error",
+        "reportOptionalMemberAccess": "error",
+        "reportOptionalCall": "error",
+        "reportOptionalIterable": "error",
+        "reportOptionalContextManager": "error",
+        "reportOptionalOperand": "error",
+        "reportTypedDictNotRequiredAccess": "error",
+        "reportPrivateImportUsage": "error",
+        "reportUnboundVariable": "error",
+        "reportUnusedCoroutine": "error",
+        "reportConstantRedefinition": "error",
+        "reportDuplicateImport": "error",
+        "reportFunctionMemberAccess": "error",
+        "reportImportCycles": "error",
+        "reportIncompatibleMethodOverride": "error",
+        "reportIncompatibleVariableOverride": "error",
+        "reportIncompleteStub": "error",
+        "reportInconsistentConstructor": "error",
+        "reportInvalidStubStatement": "error",
+        "reportMatchNotExhaustive": "error",
+        "reportMissingParameterType": "error",
+        "reportMissingTypeArgument": "error",
+        "reportOverlappingOverload": "error",
+        "reportPrivateUsage": "error",
+        "reportTypeCommentUsage": "error",
+        "reportUnknownArgumentType": "error",
+        "reportUnknownLambdaType": "error",
+        "reportUnknownMemberType": "error",
+        "reportUnknownParameterType": "error",
+        "reportUnknownVariableType": "error",
+        "reportUnnecessaryCast": "error",
+        "reportUnnecessaryComparison": "error",
+        "reportUnnecessaryContains": "error",
+        "reportUnnecessaryIsInstance": "error",
+        "reportUnusedClass": "error",
+        "reportUnusedImport": "error",
+        "reportUnusedFunction": "error",
+        "reportUnusedVariable": "error",
+        "reportUntypedBaseClass": "error",
+        "reportUntypedClassDecorator": "error",
+        "reportUntypedFunctionDecorator": "error",
+        "reportUntypedNamedTuple": "error",
+        "reportCallInDefaultInitializer": "error",  // was "none"
+        "reportImplicitStringConcatenation": "none",
+        "reportMissingSuperCall": "error",  // was "none"
+        "reportPropertyTypeMismatch": "error",  // was "none"
+        "reportUninitializedInstanceVariable": "error",  // was "none"
+        "reportUnnecessaryTypeIgnoreComment": "error",  // was "none"
+        "reportUnusedCallResult": "error",  // was "none"
+    },
+    "python.linting.pylintCategorySeverity.warning": "Error",
+    "python.linting.pylintCategorySeverity.refactor": "Warning",
+    "python.linting.pylintCategorySeverity.convention": "Warning",
+    "python.linting.banditArgs": [
+        "--skip=B101,B603,B404"
+    ],
+    "python.linting.pylintPath": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/pylint",
+    "python.linting.banditPath": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/bandit",
+    "python.testing.pytestPath": "/opt/conda/miniforge/envs/${workspaceFolderBasename}/bin/pytest",
+    "shellcheck.executablePath": "/opt/conda/miniforge/envs/pytest-shell-script-test-harness/bin/shellcheck",
+    "python.testing.promptToConfigure": false,
+    // "bracketLens.minBracketScopeLines": 2,
+    // "bracketLens.languageConfiguration": {
+    // "ignoreCase": false,
+    // "comments": {
+    //     "block": [
+    //         {
+    //             "opening": "/*",
+    //             "closing": "*/"
+    //         },
+    //     ],
+    //     "line": [
+    //         "//",
+    //         "#",
+    //     ]
+    // },
+    // "brackets": {
+    //     "symbol": [
+    //         {
+    //             "opening": "(",
+    //             "closing": ")",
+    //             "headerMode": "smart",
+    //             "inters": []
+    //         },
+    //         {
+    //             "opening": "[",
+    //             "closing": "]",
+    //             "headerMode": "smart",
+    //             "inters": []
+    //         },
+    //         {
+    //             "opening": "{",
+    //             "closing": "}",
+    //             "headerMode": "smart",
+    //             "inters": []
+    //         },
+    //     ],
+    //     "word": [
+    //         {
+    //             "opening": "if",
+    //             "closing": "fi",
+    //             "headerMode": "inner",
+    //             "inters": [
+    //             // "\\",
+    //             // "then",
+    //             // "else",
+    //             // "elif",
+    //             ]
+    //         }
+    //     ]
+    // },
+    // "strings": {
+    //     "inline": [
+    //         {
+    //             "opening": "\"",
+    //             "closing": "\"",
+    //             "escape": [
+    //             "\\\\",
+    //             "\\\""
+    //             ]
+    //         },
+    //         {
+    //             "opening": "'",
+    //             "closing": "'",
+    //             "escape": [
+    //             "\\\\",
+    //             "\\'"
+    //             ]
+    //         }
+    //     ],
+    //     "multiline": [
+    //         {
+    //             "opening": "`",
+    //             "closing": "`",
+    //             "escape": [
+    //             "\\\\",
+    //             "\\`"
+    //             ]
+    //         }
+    //     ]
+    //     },
+    //     "terminators": [
+    //         ";",
+    //         ",",
+    //     ],
+    //     "ignoreSymbols": [
+    //         "\\//"
+    //     ]
+    // },
+    // "bracketLens.mode": "auto",
+    // "[python]": {
+    //     "bracketLens.mode": "auto",
+    // },
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#d26767",
         "activityBar.background": "#d26767",
@@ -19,8 +753,4 @@
         "titleBar.inactiveForeground": "#e7e7e799"
     },
     "peacock.color": "#c64040",
-    "cSpell.words": [
-        "FGCOLOR",
-        "GTFO"
-    ]
 }

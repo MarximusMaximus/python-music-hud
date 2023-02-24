@@ -1,0 +1,1 @@
+../src/python_music_hud_tv/bin/python-music-hud-tv.py
