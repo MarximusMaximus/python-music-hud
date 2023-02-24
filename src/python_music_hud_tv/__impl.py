@@ -55,7 +55,7 @@ from typing import (
 #===============================================================================
 #region third party
 
-from ScriptingBridge import SBApplication  # type: ignore[reportGeneralTypesIssues,import]  # pylint: disable=no-name-in-module
+from ScriptingBridge import SBApplication  # type: ignore[reportGeneralTypesIssues,import]  # pylint: disable=no-name-in-module,import-error  # noqa: E501,B950
 
 #endregion third party
 #===============================================================================
@@ -71,8 +71,8 @@ STATE_STOPPED = 1800426352
 
 SERVER_PORT = 8080
 
-BGCOLOR="#6E6856"
-FGCOLOR="29,27,22"
+BGCOLOR = "#6E6856"
+FGCOLOR = "29,27,22"
 
 SECRET_TITLES = [
     "Sherry",
@@ -103,8 +103,8 @@ LAST_DANCE_TITLE = "(I've Had) The Time of My Life"
 ################################################################################
 #region Globals
 
-g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.apple.Music")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long
-g_app_spotify: Any = SBApplication.applicationWithBundleIdentifier_("com.spotify.client")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long
+g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.apple.Music")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
+g_app_spotify: Any = SBApplication.applicationWithBundleIdentifier_("com.spotify.client")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
 #endregion Globals
 ################################################################################
@@ -123,9 +123,11 @@ def commentToStyle(comment: str | None) -> str:
 
     comment = comment.split(";")[0]
 
-    comment = comment\
-        .replace("ECS", "East Coast Swing, Jitterbug")\
+    comment = (
+        comment
+        .replace("ECS", "East Coast Swing, Jitterbug")
         .replace("WCS", "West Coast Swing")
+    )
 
     ret = "<li>" + comment.replace(",", "</li><li>") + "</li>" if comment else ""
     ret += "<li>Whatever Feels Right</li>"
@@ -139,10 +141,11 @@ def commentToStyle(comment: str | None) -> str:
 #region Public Classes
 
 #===============================================================================
-class Server(object):
+class Server():
     """
     TODO
     """
+
     keep_running = True
     thread: threading_Thread | None = None
     test_case: Any = None
@@ -156,14 +159,14 @@ class Server(object):
         """
         TODO
         """
+
         print("setting up server")
 
         self.thread = threading_Thread(
             target=self.serverThread,
-            args=
-            [
-                handler_cls
-            ]
+            args=[
+                handler_cls,
+            ],
         )
         self.thread.start()
 
@@ -172,9 +175,10 @@ class Server(object):
         """
         TODO
         """
+
         print("starting server")
 
-        server = http_server_HTTPServer(('localhost', SERVER_PORT), handler_cls)
+        server = http_server_HTTPServer(("localhost", SERVER_PORT), handler_cls)
 
         while self.keep_running:
             server.handle_request()
@@ -187,6 +191,7 @@ class Server(object):
         """
         TODO
         """
+
         self.keep_running = False
         if self.thread is not None:
             self.thread.join()
@@ -203,6 +208,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         """
         TODO
         """
+
         parsed_path = urllib_parse_urlparse(self.path)
         real_path = parsed_path.path
         # headers = self.headers
@@ -242,7 +248,12 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
         if real_path == "/STOP_SERVER":
             return
-        elif g_app_apple_music is not None and g_app_apple_music.isRunning() and g_app_apple_music.playerState() == STATE_PLAYING:
+
+        if (
+            g_app_apple_music is not None and
+            g_app_apple_music.isRunning() and
+            g_app_apple_music.playerState() == STATE_PLAYING
+        ):
             print("getting info from Apple Music App")
             current_track = g_app_apple_music.currentTrack()
             current_title = current_track.name()
@@ -259,15 +270,23 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
             current_length_minutes = int(current_length_in_seconds / 60)
             current_length_seconds = int(current_length_in_seconds % 60)
-            current_length_pretty = f"{current_length_minutes:d}:{current_length_seconds:02d}"
+            current_length_pretty = (
+                f"{current_length_minutes:d}:{current_length_seconds:02d}"
+            )
 
             current_player_position_in_seconds = g_app_apple_music.playerPosition()
-            current_adjusted_player_position = max(current_player_position_in_seconds - current_start, 0)
+            current_adjusted_player_position = (
+                max(current_player_position_in_seconds - current_start, 0)
+            )
             current_position_minutes = int(current_adjusted_player_position / 60)
             current_position_seconds = int(current_adjusted_player_position % 60)
-            current_position_pretty = f"{current_position_minutes:d}:{current_position_seconds:02d}"
+            current_position_pretty = (
+                f"{current_position_minutes:d}:{current_position_seconds:02d}"
+            )
 
-            current_position_and_length_pretty = f"{current_position_pretty}/{current_length_pretty}"
+            current_position_and_length_pretty = (
+                f"{current_position_pretty}/{current_length_pretty}"
+            )
 
             current_playlist = g_app_apple_music.currentPlaylist()
             playlist_tracks = current_playlist.tracks()
@@ -284,7 +303,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
             next_index = current_index + 1
             if next_index <= playlist_tracks.count():
-                next_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1
+                next_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
                 next_title = next_track.name()
                 next_artist = next_track.artist()
                 if next_artist is not None:
@@ -302,7 +321,9 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
                 next_length_minutes = int(next_length_seconds / 60)
                 next_length_seconds = int(next_length_seconds % 60)
-                next_length_pretty = f" - {next_length_minutes:d}:{next_length_seconds:02d}"
+                next_length_pretty = (
+                    f" - {next_length_minutes:d}:{next_length_seconds:02d}"
+                )
 
                 next_dance_style_header = "Dance Style Info:"
 
@@ -313,7 +334,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
             next_next_index = current_index + 2
             if next_next_index <= playlist_tracks.count():
-                next_next_track = playlist_tracks[next_next_index - 1]  # b/c playlist index is offset, first is index -1
+                next_next_track = playlist_tracks[next_next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
                 next_next_title = next_next_track.name()
 
                 next_next_comment = next_next_track.comment()
@@ -322,10 +343,12 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                     if next_next_comment:
                         next_next_comment += ", "
                     next_next_comment += "Whatever Feels Right"
-                    next_next_comment = "<br/>" + next_next_comment\
-                        .replace("ECS", "East Coast Swing, Jitterbug")\
+                    next_next_comment = (
+                        next_next_comment
+                        .replace("ECS", "East Coast Swing, Jitterbug")
                         .replace("WCS", "West Coast Swing")
-
+                    )
+                    next_next_comment = f"<br/>{next_next_comment}"
 
                 next_next_start = next_next_track.start()
                 next_next_end = next_next_track.finish()
@@ -333,7 +356,9 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
                 next_next_length_minutes = int(next_next_length_seconds / 60)
                 next_next_length_seconds = int(next_next_length_seconds % 60)
-                next_next_length_pretty = f" - {next_next_length_minutes:d}:{next_next_length_seconds:02d}"
+                next_next_length_pretty = (
+                    f" - {next_next_length_minutes:d}:{next_next_length_seconds:02d}"
+                )
 
                 next_next_header = "Followed by:<br/>"
 
@@ -343,9 +368,11 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             current_playlist_name = current_playlist.name()
 
             if (
-                next_next_title == GAP_SILENCE_TITLE or
-                next_title == GAP_SILENCE_TITLE or
-                current_title == GAP_SILENCE_TITLE
+                GAP_SILENCE_TITLE in (
+                    current_title,
+                    next_title,
+                    next_next_title,
+                )
             ):
                 next_next_title = ""
                 next_next_comment = ""
@@ -353,8 +380,10 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 next_next_header = ""
 
             if (
-                next_title == GAP_SILENCE_TITLE or
-                current_title == GAP_SILENCE_TITLE
+                GAP_SILENCE_TITLE in (
+                    current_title,
+                    next_title,
+                )
             ):
                 next_title = ""
                 next_artist = ""
@@ -388,7 +417,11 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 next_dance_style_header = ""
                 next_divider = "<hr>"
                 next_header = ""
-        elif g_app_spotify is not None and g_app_spotify.isRunning() and g_app_spotify.playerState() == STATE_PLAYING:
+        elif (
+            g_app_spotify is not None and
+            g_app_spotify.isRunning() and
+            g_app_spotify.playerState() == STATE_PLAYING
+        ):
             print("getting info from Spotify App")
             current_playlist_name = "SPOTIFY"
 
@@ -402,15 +435,21 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
             current_length_minutes = int(current_length_in_seconds / 60)
             current_length_seconds = int(current_length_in_seconds % 60)
-            current_length_pretty = f"{current_length_minutes:d}:{current_length_seconds:02d}"
+            current_length_pretty = (
+                f"{current_length_minutes:d}:{current_length_seconds:02d}"
+            )
 
             current_player_position_as_float = g_app_spotify.playerPosition()
             current_adjusted_player_position = int(current_player_position_as_float)
             current_position_minutes = int(current_adjusted_player_position / 60)
             current_position_seconds = int(current_adjusted_player_position % 60)
-            current_position_pretty = f"{current_position_minutes:d}:{current_position_seconds:02d}"
+            current_position_pretty = (
+                f"{current_position_minutes:d}:{current_position_seconds:02d}"
+            )
 
-            current_position_and_length_pretty = f"{current_position_pretty}/{current_length_pretty}"
+            current_position_and_length_pretty = (
+                f"{current_position_pretty}/{current_length_pretty}"
+            )
         else:
             print("no music app playing")
 
@@ -425,12 +464,17 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 next_next_title = "Next: " + next_next_title
             next_title = current_title
             if next_title:
-                next_title = "<br/><br/><br/><br/><br/><br/><br/>Currently Playing: " + next_title + "<br/>" + next_next_title
+                next_title = (
+                    "<br/><br/><br/><br/><br/><br/><br/>" +
+                    f"Currently Playing:{next_title}<br/>{next_next_title}"
+                )
             else:
                 next_title = ""
             next_next_title = ""
 
-            current_title = "<div class=\"bigTitle\"><br/>Mark<br/>&<br/>Sherry<br/>Wedding</div>"
+            current_title = (
+                "<div class=\"bigTitle\"><br/>Mark<br/>&<br/>Sherry<br/>Wedding</div>"
+            )
             current_artist = ""
             current_position_and_length_pretty = ""
             current_dance_style_header = ""
@@ -448,7 +492,6 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             next_next_header = ""
         else:
             current_title = "<div class=\"title\">" + current_title + "</div>"
-
 
         real_time = datetime_datetime.now().strftime("%-I:%M:%S %p")
 
@@ -626,7 +669,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 </div>
             </div></body>
             </html>
-            """
+            """  # noqa: E501,B950
         )
 
         message_bytes = message.encode("utf8", errors="ignore")

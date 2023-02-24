@@ -53,6 +53,10 @@ def __main(argv: list[str]) -> int:
     """
     TODO
     """
+
+    # ignore unused args
+    argv = argv  # pylint: disable=self-assigning-variable
+
     server = python_music_hud_tv_Server()
     server.runServer(python_music_hud_tv_GenericHandler)
 
