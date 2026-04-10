@@ -1,6 +1,7 @@
 """
 python-music-hud-tv
 """
+# flake8: noqa=D101
 ################################################################################
 #region Python Library Preamble
 
@@ -18,11 +19,11 @@ from logging import (  # noqa: F401
 logger = logging_getLogger(__name__)
 logger_log = logger.log
 
-
 #endregion Python Library Preamble
 ################################################################################
 
 # TODO: refactor the globals to remove them
+# TODO: re-enable flake8 D101
 
 ###############################################################################
 #region Imports
@@ -47,6 +48,7 @@ from urllib.parse import (
 from typing import (
     Any,
     Type,
+    TypedDict,
 )
 
 #endregion stdlib
@@ -64,6 +66,36 @@ from ScriptingBridge import SBApplication  # type: ignore[reportGeneralTypesIssu
 ################################################################################
 
 ################################################################################
+#region Types
+
+class Track(TypedDict):
+    title: str
+    artist: str
+    duration_in_seconds: int
+    duration_pretty: str
+    grouping: str
+    comment: str
+
+class _MusicData_Songs(TypedDict):
+    current: Track
+    next: Track
+    next_next: Track
+
+class MusicData(TypedDict):
+    current_play_head_time_in_seconds: int
+    current_play_head_time_pretty: str
+    current_play_head_time_and_length_pretty: str
+    current_playlist_name: str
+    songs: _MusicData_Songs
+
+Application = Any
+AppleMusicTrack = Any
+SpotifyTrack = Any
+
+#endregion Types
+################################################################################
+
+################################################################################
 #region Constants
 
 STATE_PLAYING = 1800426320
@@ -71,8 +103,9 @@ STATE_STOPPED = 1800426352
 
 SERVER_PORT = 8080
 
-BGCOLOR = "#6E6856"
-FGCOLOR = "29,27,22"
+BACKGROUND_COLOR = "#6E6856"
+FOREGROUND_COLOR = "29,27,22"
+EVENT_TITLE_HTML = "Mark<br/>&<br/>Sherry<br/>Wedding"
 
 SECRET_TITLES = [
     "Sherry",
@@ -113,12 +146,233 @@ g_app_spotify: Any = SBApplication.applicationWithBundleIdentifier_("com.spotify
 ################################################################################
 #region Public Functions
 
+def durationInSecondsToPretty(duration_in_seconds: int) -> str:
+    minutes = int(duration_in_seconds / 60)
+    seconds = int(duration_in_seconds % 60)
+    length_pretty = f"{minutes:d}:{seconds:02d}"
+    return length_pretty
+
+def getApp(name: str) -> Application:
+    return SBApplication.applicationWithBundleIdentifier_(name)  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
+
+def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
+    ret_track: Track = {
+        "title": "",
+        "artist": "",
+        "duration_in_seconds": 0,
+        "duration_pretty": "",
+        "grouping": "",
+        "comment": "",
+    }
+
+    if track and track.name():
+        length = int(track.finish() - track.start())
+        ret_track = {
+            "title": str(track.name()),
+            "artist": str(track.artist()),
+            "duration_in_seconds": length,
+            "duration_pretty": durationInSecondsToPretty(length),
+            "grouping": str(track.grouping()),
+            "comment": str(track.comment()),
+        }
+
+    return ret_track
+
+def appleMusicGetPlaylistName() -> str:
+    ret_name = ""
+
+    app_apple_music = getApp("com.apple.Music")
+
+    if (
+        app_apple_music is not None and
+        app_apple_music.isRunning() and
+        app_apple_music.playerState() == STATE_PLAYING
+    ):
+        app_apple_music_playlist = app_apple_music.currentPlaylist()
+        if app_apple_music_playlist:
+            ret_name = app_apple_music_playlist.name()
+
+    return ret_name
+
+def appleMusicGetCurrentPlayHeadTimeInSeconds() -> int:
+    ret_time = 0
+
+    app_apple_music = getApp("com.apple.Music")
+
+    if (
+        app_apple_music is not None and
+        app_apple_music.isRunning() and
+        app_apple_music.playerState() == STATE_PLAYING
+    ):
+        raw_time = app_apple_music.playerPosition()
+
+        # adjust raw_time by track start time b/c the track can start playing
+        # from a time greater than 0, such as if skipping a long silence or intro
+        current_track = g_app_apple_music.currentTrack()
+        current_start = current_track.start()
+
+        cooked_time = raw_time - current_start
+        ret_time = max(cooked_time, 0)
+
+    return ret_time
+
+def appleMusicGetCurrentTrack() -> Track:
+    app_apple_music = getApp("com.apple.Music")
+
+    app_apple_music_track: AppleMusicTrack = None
+    if (
+        app_apple_music is not None and
+        app_apple_music.isRunning() and
+        app_apple_music.playerState() == STATE_PLAYING
+    ):
+        app_apple_music_track = app_apple_music.currentTrack()
+
+    ret_track = appleMusicTrackToOurTrack(app_apple_music_track)
+
+    return ret_track
+
+def appleMusicGetNextTrack(offset: int = 1) -> Track:
+    app_apple_music = getApp("com.apple.Music")
+
+    app_apple_music_track: AppleMusicTrack = None
+    if (
+        app_apple_music is not None and
+        app_apple_music.isRunning() and
+        app_apple_music.playerState() == STATE_PLAYING
+    ):
+        app_apple_music_playlist = app_apple_music.currentPlaylist()
+        if app_apple_music_playlist:
+            current_track = g_app_apple_music.currentTrack()
+            current_index = current_track.index()
+            playlist_tracks = app_apple_music_playlist.tracks()
+            next_index = current_index + offset
+            app_apple_music_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
+
+    ret_track = appleMusicTrackToOurTrack(app_apple_music_track)
+
+    return ret_track
+
+def spotifyGetCurrentPlayHeadTimeInSeconds() -> int:
+    ret_time = 0
+
+    app_spotify = getApp("com.spotify.client")
+
+    if (
+        app_spotify is not None and
+        app_spotify.isRunning() and
+        app_spotify.playerState() == STATE_PLAYING
+    ):
+        ret_time = int(app_spotify.playerPosition())
+
+    return ret_time
+
+def spotifyGetCurrentTrack() -> Track:
+    ret_track: Track = {
+        "title": "",
+        "artist": "",
+        "duration_in_seconds": 0,
+        "duration_pretty": "",
+        "grouping": "",
+        "comment": "",
+    }
+
+    app_spotify = getApp("com.spotify.client")
+
+    if (
+        app_spotify is not None and
+        app_spotify.isRunning() and
+        app_spotify.playerState() == STATE_PLAYING
+    ):
+        track = app_spotify.currentTrack()
+        length = track.duration() // 1000
+        ret_track = {
+            "title": track.name(),
+            "artist": track.artist(),
+            "duration_in_seconds": length,
+            "duration_pretty": durationInSecondsToPretty(length),
+            "grouping": "",
+            "comment": "",
+        }
+
+    return ret_track
+
+def getMusicData() -> MusicData:
+    """
+    TODO
+    """
+
+    music_data: MusicData = {
+        "current_play_head_time_in_seconds": 0,
+        "current_play_head_time_pretty": "",
+        "current_play_head_time_and_length_pretty": "",
+        "current_playlist_name": "",
+        "songs": {
+            "current": {
+                "title": "",
+                "artist": "",
+                "duration_in_seconds": 0,
+                "duration_pretty": "",
+                "grouping": "",
+                "comment": "",
+            },
+            "next": {
+                "title": "",
+                "artist": "",
+                "duration_in_seconds": 0,
+                "duration_pretty": "",
+                "grouping": "",
+                "comment": "",
+            },
+            "next_next": {
+                "title": "",
+                "artist": "",
+                "duration_in_seconds": 0,
+                "duration_pretty": "",
+                "grouping": "",
+                "comment": "",
+            },
+        },
+    }
+
+    if (
+        g_app_apple_music is not None and
+        g_app_apple_music.isRunning() and
+        g_app_apple_music.playerState() == STATE_PLAYING
+    ):
+        logger.debug("getting info from Apple Music App")
+        music_data["songs"]["current"] = appleMusicGetCurrentTrack()
+        music_data["songs"]["next"] = appleMusicGetNextTrack()
+        music_data["songs"]["next_next"] = appleMusicGetNextTrack(offset=2)
+        music_data["current_play_head_time_in_seconds"] = \
+            appleMusicGetCurrentPlayHeadTimeInSeconds()
+        music_data["current_playlist_name"] = appleMusicGetPlaylistName()
+    elif (
+        g_app_spotify is not None and
+        g_app_spotify.isRunning() and
+        g_app_spotify.playerState() == STATE_PLAYING
+    ):
+        logger.debug("getting info from Spotify App")
+        music_data["songs"]["current"] = spotifyGetCurrentTrack()
+        music_data["current_play_head_time_in_seconds"] = \
+            spotifyGetCurrentPlayHeadTimeInSeconds()
+    else:
+        logger.debug("no music app playing")
+
+    music_data["current_play_head_time_pretty"] = \
+        durationInSecondsToPretty(music_data["current_play_head_time_in_seconds"])
+
+    music_data["current_play_head_time_and_length_pretty"] = \
+        f'{music_data["current_play_head_time_pretty"]}/{music_data["songs"]["current"]["duration_pretty"]}'
+
+    return music_data
+
+
 def commentToStyle(comment: str | None) -> str:
     """
     TODO
     """
 
-    if comment is None:
+    if not comment:
         return ""
 
     comment = comment.split(";")[0]
@@ -160,7 +414,7 @@ class Server():
         TODO
         """
 
-        print("setting up server")
+        logger.debug("setting up server")
 
         self.thread = threading_Thread(
             target=self.serverThread,
@@ -176,7 +430,7 @@ class Server():
         TODO
         """
 
-        print("starting server")
+        logger.debug("starting server")
 
         server = http_server_HTTPServer(("localhost", SERVER_PORT), handler_cls)
 
@@ -184,7 +438,7 @@ class Server():
             server.handle_request()
         server.server_close()
 
-        print("server closed")
+        logger.debug("server closed")
 
     #---------------------------------------------------------------------------
     def stopServer(self) -> None:
@@ -213,285 +467,146 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         real_path = parsed_path.path
         # headers = self.headers
 
-        current_track: Any
-        current_playlist: Any
-        playlist_tracks: Any
-
-        current_title: str | None = ""
-        current_artist: str | None = ""
-        current_comment: str | None = ""
-        current_length_pretty: str | None = ""
-        current_position_and_length_pretty: str | None = ""
-        current_dance_style_header: str | None = ""
-        current_style: str | None = ""
-        current_start: int = 0
-        current_end: int = 0
-        current_length_in_seconds: int = 0
-        current_player_position_as_float: float = 0
-        current_player_position_in_seconds: int = 0
-        current_length_minutes: int = 0
-        current_length_seconds: int = 0
-        current_playlist_name: str = ""
-
-        next_title: str | None = ""
-        next_artist: str | None = ""
-        next_style: str | None = ""
-        next_length_pretty: str | None = ""
-        next_dance_style_header: str | None = ""
-        next_divider: str | None = ""
-        next_header: str | None = ""
-
-        next_next_title: str | None = ""
-        next_next_comment: str | None = ""
-        next_next_length_pretty: str | None = ""
-        next_next_header: str | None = ""
-
         if real_path == "/STOP_SERVER":
             return
 
-        if (
-            g_app_apple_music is not None and
-            g_app_apple_music.isRunning() and
-            g_app_apple_music.playerState() == STATE_PLAYING
+        music_data = getMusicData()
+
+        current_dance_style_header: str = ""
+        next_divider: str = ""
+        next_header: str = ""
+        next_dance_style_header: str = ""
+        next_next_header: str = ""
+
+        if music_data["songs"]["next_next"]["title"] in SECRET_TITLES:
+            music_data["songs"]["next_next"]["title"] = "*****"
+        elif (
+            GAP_SILENCE_TITLE in (
+                music_data["songs"]["next_next"]["title"],
+                music_data["songs"]["next"]["title"],
+                music_data["songs"]["current"]["title"],
+            )
         ):
-            print("getting info from Apple Music App")
-            current_track = g_app_apple_music.currentTrack()
-            current_title = current_track.name()
-            current_artist = current_track.artist()
-            if current_artist:
-                current_artist = "by " + current_artist
-            current_comment = current_track.comment()
-            current_style = commentToStyle(current_comment)
-            current_index = current_track.index()
+            music_data["songs"]["next_next"]["title"] = ""
+            music_data["songs"]["next_next"]["duration_pretty"] = ""
+            music_data["songs"]["next_next"]["comment"] = ""
 
-            current_start = current_track.start()
-            current_end = current_track.finish()
-            current_length_in_seconds = int(current_end - current_start)
-
-            current_length_minutes = int(current_length_in_seconds / 60)
-            current_length_seconds = int(current_length_in_seconds % 60)
-            current_length_pretty = (
-                f"{current_length_minutes:d}:{current_length_seconds:02d}"
+        if music_data["songs"]["next"]["title"] in SECRET_TITLES:
+            music_data["songs"]["next"]["title"] = "*****"
+            music_data["songs"]["next"]["artist"] = "*****"
+        elif (
+            GAP_SILENCE_TITLE in (
+                music_data["songs"]["next"]["title"],
+                music_data["songs"]["current"]["title"],
             )
+        ):
+            music_data["songs"]["next"]["title"] = ""
+            music_data["songs"]["next"]["artist"] = ""
+            music_data["songs"]["next"]["duration_pretty"] = ""
+            music_data["songs"]["next"]["comment"] = ""
 
-            current_player_position_in_seconds = g_app_apple_music.playerPosition()
-            current_adjusted_player_position = (
-                max(current_player_position_in_seconds - current_start, 0)
+        if music_data["songs"]["current"]["title"] == GAP_SILENCE_TITLE:
+            music_data["songs"]["current"]["title"] = ""
+            music_data["songs"]["current"]["artist"] = ""
+            music_data["songs"]["current"]["comment"] = ""
+
+        if (
+            music_data["songs"]["current"]["title"] in (
+                LAST_CALL_TITLE,
+                LAST_DANCE_TITLE,
             )
-            current_position_minutes = int(current_adjusted_player_position / 60)
-            current_position_seconds = int(current_adjusted_player_position % 60)
-            current_position_pretty = (
-                f"{current_position_minutes:d}:{current_position_seconds:02d}"
-            )
+        ):
+            music_data["songs"]["next"]["title"] = ""
+            music_data["songs"]["next"]["artist"] = ""
+            music_data["songs"]["next"]["duration_pretty"] = ""
+            music_data["songs"]["next"]["comment"] = ""
 
-            current_position_and_length_pretty = (
-                f"{current_position_pretty}/{current_length_pretty}"
-            )
+            music_data["songs"]["next_next"]["title"] = ""
+            music_data["songs"]["next_next"]["duration_pretty"] = ""
+            music_data["songs"]["next_next"]["comment"] = ""
 
-            current_playlist = g_app_apple_music.currentPlaylist()
-            playlist_tracks = current_playlist.tracks()
-
-            current_dance_style_header = "Dance Style Info:"
-
-            next_title = "-"
-            next_artist = ""
-            next_style = ""
-            next_length_pretty = ""
             next_dance_style_header = ""
+            next_header = ""
+            next_next_header = ""
+            next_divider = "<hr>"
+
+        music_data["songs"]["current"]["comment"] = commentToStyle(music_data["songs"]["current"]["comment"])
+
+        if music_data["songs"]["current"]["title"]:
+            current_dance_style_header = "Dance Style Info:"
+        else:
+            music_data["current_play_head_time_and_length_pretty"] = ""
+
+        if music_data["songs"]["next"]["title"]:
+            music_data["songs"]["next"]["comment"] = commentToStyle(music_data["songs"]["next"]["comment"])
+
             next_divider = "<hr>"
             next_header = "Next Up:"
+            next_dance_style_header = "Dance Style Info:"
 
-            next_index = current_index + 1
-            if next_index <= playlist_tracks.count():
-                next_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
-                next_title = next_track.name()
-                next_artist = next_track.artist()
-                if next_artist is not None:
-                    next_artist = "by " + next_artist
-                next_comment = next_track.comment()
-                next_style = commentToStyle(next_comment)
-
-                if next_title in SECRET_TITLES:
-                    next_title = "*****"
-                    next_artist = "*****"
-
-                next_start = next_track.start()
-                next_end = next_track.finish()
-                next_length_seconds = int(next_end - next_start)
-
-                next_length_minutes = int(next_length_seconds / 60)
-                next_length_seconds = int(next_length_seconds % 60)
-                next_length_pretty = (
-                    f" - {next_length_minutes:d}:{next_length_seconds:02d}"
-                )
-
-                next_dance_style_header = "Dance Style Info:"
-
-            next_next_title = ""
-            next_next_comment = ""
-            next_next_length_pretty = ""
-            next_next_header = ""
-
-            next_next_index = current_index + 2
-            if next_next_index <= playlist_tracks.count():
-                next_next_track = playlist_tracks[next_next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
-                next_next_title = next_next_track.name()
-
-                next_next_comment = next_next_track.comment()
-                if next_next_comment is not None:
-                    next_next_comment = next_next_comment.split(";")[0]
-                    if next_next_comment:
-                        next_next_comment += ", "
-                    next_next_comment += "Whatever Feels Right"
-                    next_next_comment = (
-                        next_next_comment
-                        .replace("ECS", "East Coast Swing, Jitterbug")
-                        .replace("WCS", "West Coast Swing")
-                    )
-                    next_next_comment = f"<br/>{next_next_comment}"
-
-                next_next_start = next_next_track.start()
-                next_next_end = next_next_track.finish()
-                next_next_length_seconds = int(next_next_end - next_next_start)
-
-                next_next_length_minutes = int(next_next_length_seconds / 60)
-                next_next_length_seconds = int(next_next_length_seconds % 60)
-                next_next_length_pretty = (
-                    f" - {next_next_length_minutes:d}:{next_next_length_seconds:02d}"
-                )
-
-                next_next_header = "Followed by:<br/>"
-
-                if next_next_title in SECRET_TITLES:
-                    next_next_title = "*****"
-
-            current_playlist_name = current_playlist.name()
-
-            if (
-                GAP_SILENCE_TITLE in (
-                    current_title,
-                    next_title,
-                    next_next_title,
-                )
-            ):
-                next_next_title = ""
-                next_next_comment = ""
-                next_next_length_pretty = ""
-                next_next_header = ""
-
-            if (
-                GAP_SILENCE_TITLE in (
-                    current_title,
-                    next_title,
-                )
-            ):
-                next_title = ""
-                next_artist = ""
-                next_style = ""
-                next_length_pretty = ""
-                next_dance_style_header = ""
-                next_divider = ""
-                next_header = ""
-            elif next_title == LAST_DANCE_TITLE:
+            if music_data["songs"]["next"]["title"] == LAST_DANCE_TITLE:
                 next_header = "LAST DANCE:"
 
-            if current_title == GAP_SILENCE_TITLE:
-                current_title = ""
-            elif current_title == LAST_CALL_TITLE:
-                next_title = "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
-                next_artist = ""
-                next_style = ""
-                next_length_pretty = ""
-                next_dance_style_header = ""
-                next_divider = "<hr>"
-                next_header = ""
-                next_next_title = ""
-                next_next_length_pretty = ""
-                next_next_header = ""
-                next_next_comment = ""
-            elif current_title == LAST_DANCE_TITLE:
-                next_title = "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
-                next_artist = ""
-                next_style = ""
-                next_length_pretty = ""
-                next_dance_style_header = ""
-                next_divider = "<hr>"
-                next_header = ""
-        elif (
-            g_app_spotify is not None and
-            g_app_spotify.isRunning() and
-            g_app_spotify.playerState() == STATE_PLAYING
-        ):
-            print("getting info from Spotify App")
-            current_playlist_name = "SPOTIFY"
+            if music_data["songs"]["next"]["artist"]:
+                music_data["songs"]["next"]["artist"] = f'by {music_data["songs"]["next"]["artist"]}'
 
-            current_track = g_app_spotify.currentTrack()
-            current_title = current_track.name()
-            current_artist = current_track.artist()
-            if current_artist:
-                current_artist = "by " + current_artist
+        if music_data["songs"]["next_next"]["title"]:
+            music_data["songs"]["next_next"]["comment"] = commentToStyle(music_data["songs"]["next_next"]["comment"])
 
-            current_length_in_seconds = current_track.duration() // 1000
+            next_next_header = "Followed by:<br/>"
 
-            current_length_minutes = int(current_length_in_seconds / 60)
-            current_length_seconds = int(current_length_in_seconds % 60)
-            current_length_pretty = (
-                f"{current_length_minutes:d}:{current_length_seconds:02d}"
-            )
+        if music_data["songs"]["current"]["title"] == LAST_CALL_TITLE:
+            music_data["songs"]["next"]["title"] = "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
+        elif music_data["songs"]["current"]["title"] == LAST_DANCE_TITLE:
+            music_data["songs"]["next"]["title"] = "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
 
-            current_player_position_as_float = g_app_spotify.playerPosition()
-            current_adjusted_player_position = int(current_player_position_as_float)
-            current_position_minutes = int(current_adjusted_player_position / 60)
-            current_position_seconds = int(current_adjusted_player_position % 60)
-            current_position_pretty = (
-                f"{current_position_minutes:d}:{current_position_seconds:02d}"
-            )
-
-            current_position_and_length_pretty = (
-                f"{current_position_pretty}/{current_length_pretty}"
-            )
-        else:
-            print("no music app playing")
-
+        current_playlist_name: str = music_data["current_playlist_name"]
         if (
-            not current_title or
+            not music_data["songs"]["current"]["title"] or
             current_playlist_name not in DISPLAY_SONGS_FOR_PLAYLISTS
         ):
-            next_next_title = next_title
-            if not next_next_title or next_next_title == "-":
-                next_next_title = ""
+            music_data["songs"]["next_next"]["title"] = music_data["songs"]["next"]["title"]
+            if not music_data["songs"]["next_next"]["title"]:
+                music_data["songs"]["next_next"]["title"] = ""
             else:
-                next_next_title = "Next: " + next_next_title
-            next_title = current_title
-            if next_title:
-                next_title = (
+                music_data["songs"]["next_next"]["title"] = "Next: " + music_data["songs"]["next_next"]["title"]
+            music_data["songs"]["next"]["title"] = music_data["songs"]["current"]["title"]
+            if music_data["songs"]["next"]["title"]:
+                music_data["songs"]["next"]["title"] = (
                     "<br/><br/><br/><br/><br/><br/><br/>" +
-                    f"Currently Playing:{next_title}<br/>{next_next_title}"
+                    f'Currently Playing:{music_data["songs"]["next"]["title"]}<br/>{music_data["songs"]["next_next"]["title"]}'
                 )
             else:
-                next_title = ""
-            next_next_title = ""
+                music_data["songs"]["next"]["title"] = ""
+            music_data["songs"]["next_next"]["title"] = ""
 
-            current_title = (
-                "<div class=\"bigTitle\"><br/>Mark<br/>&<br/>Sherry<br/>Wedding</div>"
+            music_data["songs"]["current"]["title"] = (
+                f'<div class="bigTitle"><br/>{EVENT_TITLE_HTML}</div>'
             )
-            current_artist = ""
-            current_position_and_length_pretty = ""
-            current_dance_style_header = ""
-            current_style = ""
 
-            next_artist = ""
-            next_style = ""
-            next_length_pretty = ""
+            music_data["songs"]["current"]["artist"] = ""
+            music_data["songs"]["current"]["comment"] = ""
+
+            music_data["current_play_head_time_and_length_pretty"] = ""
+
+            music_data["songs"]["next"]["artist"] = ""
+            music_data["songs"]["next"]["duration_pretty"] = ""
+            music_data["songs"]["next"]["comment"] = ""
+
+            music_data["songs"]["next_next"]["title"] = ""
+            music_data["songs"]["next_next"]["duration_pretty"] = ""
+            music_data["songs"]["next_next"]["comment"] = ""
+
+            current_dance_style_header = ""
             next_dance_style_header = ""
             next_divider = ""
             next_header = ""
-
-            next_next_comment = ""
-            next_next_length_pretty = ""
             next_next_header = ""
         else:
-            current_title = "<div class=\"title\">" + current_title + "</div>"
+            music_data["songs"]["current"]["title"] = f'<div class="title">{music_data["songs"]["current"]["title"]}</div>'
+
+        if music_data["songs"]["current"]["artist"]:
+            music_data["songs"]["current"]["artist"] = f'by {music_data["songs"]["current"]["artist"]}'
 
         real_time = datetime_datetime.now().strftime("%-I:%M:%S %p")
 
@@ -501,13 +616,14 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             <html>
             <head>
             <html lang="en">
-            <meta http-equiv="refresh" content="1" />
+            <!--<meta http-equiv="refresh" content="1" />-->
             <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
             <style>
                 body {{
                     font-family: Big Caslon, -system, -system-font, Arial;
-                    background-color: {BGCOLOR};
-                    color: rgba({FGCOLOR}, 1);
+                    background-color: {BACKGROUND_COLOR};
+                    color: rgba({FOREGROUND_COLOR}, 1);
+                    overflow: hidden;
                 }}
 
                 body table {{
@@ -561,23 +677,23 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                 }}
                 .currentArtist {{
                     font-size: 2vw;
-                    color: rgba({FGCOLOR}, 0.8);
+                    color: rgba({FOREGROUND_COLOR}, 0.8);
                 }}
                 .currentStyleHeader {{
                     font-size: 2vw;
-                    color: rgba({FGCOLOR}, 0.8);
+                    color: rgba({FOREGROUND_COLOR}, 0.8);
                 }}
                 .currentStyle {{
                     font-size: 4.2vw;
                 }}
 
                 table.nextTable {{
-                    color: rgba({FGCOLOR}, 0.7);
+                    color: rgba({FOREGROUND_COLOR}, 0.7);
                 }}
 
                 table.nextNextTable {{
                     font-size: 1.5vw;
-                    color: rgba({FGCOLOR}, 0.7);
+                    color: rgba({FOREGROUND_COLOR}, 0.7);
                 }}
 
                 .headerNext {{
@@ -601,7 +717,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                     bottom: 1%;
                     right: 1%;
                     font-size: 4vw;
-                    color: rgba({FGCOLOR}, 0.4);
+                    color: rgba({FOREGROUND_COLOR}, 0.4);
                 }}
 
                 div.bigTitle {{
@@ -614,20 +730,20 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             <body><div max-width="100%">
                 <table width="98%">
                     <tr><td class="currentTitle">
-                        <div class="time">{current_position_and_length_pretty}</div>
-                        {current_title}
+                        <div class="time">{music_data["current_play_head_time_and_length_pretty"]}</div>
+                        {music_data["songs"]["current"]["title"]}
                     </td></tr>
                 </table>
                 <table width="98%">
                     <tr><td class="currentArtist">
-                        {current_artist}
+                        {music_data["songs"]["current"]["artist"]}
                     </td></tr>
                     <tr><td class="currentStyleHeader">
                         {current_dance_style_header}
                     </td></tr>
                     <tr><td class="currentStyle">
                         <ul>
-                            {current_style}
+                            {music_data["songs"]["current"]["comment"]}
                         </ul>
                     </td></tr>
                 </table>
@@ -640,17 +756,17 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                             </td>
                         </tr>
                         <tr><td class="nextTitle">
-                            {next_title} {next_length_pretty}
+                            {music_data["songs"]["next"]["title"]} {music_data["songs"]["next_next"]["duration_pretty"]}
                         </td></tr>
                         <tr><td class="nextArtist">
-                            {next_artist}
+                            {music_data["songs"]["next"]["artist"]}
                         </td></tr>
                         <tr><td class="nextStyleHeader">
                             {next_dance_style_header}
                         </td></tr>
                         <tr><td class="nextStyle">
                             <ul>
-                                {next_style}
+                                {music_data["songs"]["next"]["comment"]}
                             </ul>
                         </td></tr>
                     </table>
@@ -659,7 +775,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
                     <table class="nextNextTable">
                         <tr>
                             <td>
-                                {next_next_header} {next_next_title} {next_next_length_pretty} {next_next_comment}
+                                {next_next_header} {music_data["songs"]["next_next"]["title"]} {music_data["songs"]["next_next"]["duration_pretty"]} {music_data["songs"]["next_next"]["comment"]}
                             </td>
                         </tr>
                     </table>
@@ -677,6 +793,33 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         self.end_headers()
         _ = self.wfile.write(message_bytes)
         return
+
+    #---------------------------------------------------------------------------
+    def log_message(
+        self,
+        format: str,  # pylint: disable=redefined-builtin
+        *args: list[Any],
+    ) -> None:
+        """Log an arbitrary message.
+
+        This is used by all other logging functions.  Override
+        it if you have specific logging wishes.
+
+        The first argument, FORMAT, is a format string for the
+        message to be logged.  If the format string contains
+        any % escapes requiring parameters, they should be
+        specified as subsequent arguments (it's just like
+        printf!).
+
+        The client ip and current date/time are prefixed to
+        every message.
+
+        """
+        formatted_args = format%args
+
+        message = f"{self.address_string()} - - [{self.log_date_time_string()}] {formatted_args}"
+
+        logger.info(message)
 
 #endregion Public Classes
 ################################################################################

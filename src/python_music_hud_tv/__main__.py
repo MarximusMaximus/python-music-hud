@@ -57,6 +57,13 @@ def __main(argv: list[str]) -> int:
     # ignore unused args
     argv = argv  # pylint: disable=self-assigning-variable
 
+    # TODO: remove dorky logging hack, take real args to config logging
+    # pylint: disable=import-outside-toplevel
+    from logging import (
+        basicConfig                     as logging_basicConfig,
+    )
+    logging_basicConfig(level=1)
+
     server = python_music_hud_tv_Server()
     server.runServer(python_music_hud_tv_GenericHandler)
 
