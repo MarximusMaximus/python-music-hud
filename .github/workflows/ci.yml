@@ -1,0 +1,473 @@
+name: ci
+
+on:
+  workflow_dispatch:
+    # any manual trigger
+  push:
+    branches:
+      # only for the branches specified below
+      - main
+      - 'release/**'
+      - 'feature/**'
+      - 'issue/**'
+      - '!user/**'  # explicitly no user/ branches [mostly a note that they exist]
+  pull_request:
+    branches:
+      # only for the branches specified below
+      - main
+      - 'release/**'
+      - 'feature/**'
+      - 'issue/**'
+      - '!user/**'  # explicitly no user/ branches [mostly a note that they exist]
+
+env:
+  OMEGA_DEBUG: all
+  DO_SET_X_ACTIVATE: false
+  DO_SET_X_BOOTSTRAP: false
+  DO_SET_X_RUN: false
+  DO_SET_X_UPDATE: false
+  PY_COLORS: 1
+  WSLENV_APPEND: OMEGA_DEBUG:DO_SET_X_ACTIVATE:DO_SET_X_BOOTSTRAP:DO_SET_X_RUN:DO_SET_X_UPDATE:PY_COLORS
+  WSLENV_BASE: CI:COMPUTERNAME:DEPLOYMENT_BASEPATH/p:GITHUB_ACTION:GITHUB_ACTIONS:GITHUB_ACTION_REF:GITHUB_ACTION_REPOSITORY:GITHUB_ACTOR:GITHUB_API_URL:GITHUB_BASE_REF:GITHUB_ENV/p:GITHUB_EVENT_NAME:GITHUB_EVENT_PATH/p:GITHUB_GRAPHQL_URL:GITHUB_HEAD_REF:GITHUB_JOB:GITHUB_PATH/p:GITHUB_REF:GITHUB_REF_NAME:GITHUB_REF_PROTECTED:GITHUB_REF_TYPE:GITHUB_REPOSITORY:GITHUB_REPOSITORY_OWNER:GITHUB_RETENTION_DAYS:GITHUB_RUN_ATTEMPT:GITHUB_RUN_ID:GITHUB_RUN_NUMBER:GITHUB_SERVER_URL:GITHUB_SHA:GITHUB_STEP_SUMMARY/p:GITHUB_WORKFLOW:GITHUB_WORKSPACE/p:ImageOS:ImageVersion:OS:RUNNER_ARCH:RUNNER_NAME:RUNNER_OS:RUNNER_PERFLOG/p:RUNNER_TEMP/p:RUNNER_TOOL_CACHE/p:RUNNER_TRACKING_ID:RUNNER_USER:RUNNER_WORKSPACE/p:TEMP/p:TMP/p:WIN_HOME/p:WIN_USER
+
+defaults:
+  run:
+    shell: sh {0}
+
+jobs:
+  build:
+    name: Build Products
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner Info
+        id: runner-info
+        run: |
+          echo OS: ${{ runner.os }}
+          echo ARCH: ${{ runner.arch }}
+          echo which git:
+          which git
+          echo git version:
+          git version
+          echo Env:
+          printenv | sort
+
+      - name: Checkout Repo
+        id: checkout-repo
+        uses: actions/checkout@v3.0.2
+
+      - name: batteries-forking-included
+        id: batteries-forking-included
+        run: |
+          ./bootstrap.sh --dev
+
+      - name: Build Package
+        id: build-package
+        run: |
+          . ./activate.sh
+          poetry build
+
+      - name: Upload BFI Logs
+        id: upload-bfi-logs
+        if: always()
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: bfi-logs-build
+          if-no-files-found: error
+          path: |
+            ${{ github.workspace }}/bfi_temp/**/log/**
+
+      - name: Upload Build Products
+        id: upload-build-products
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-products
+          if-no-files-found: error
+          path: dist/*
+
+  test:
+    name: Test - ${{ matrix.os }} - ${{ matrix.tox-env }}
+    needs: build
+    defaults:
+      run:
+        shell: ${{ matrix.shell || 'sh {0}' }}
+    strategy:
+      fail-fast: false
+      # max-parallel: 4
+      matrix:
+        os: [
+          ubuntu-latest-x64,
+          macos-latest-x64,
+          windows_debian-latest-x64,
+          windows_opensuse-latest-x64,
+          windows_ubuntu-latest-x64,
+        ]
+        py-env: [
+          py38,
+          py39,
+          py310,
+        ]
+        py-style: [
+          wheel,
+          sdist,
+        ]
+        include:
+          # create additional matrix entries for ubuntu & tox_env
+          - py-env: py310
+            py-style: lint
+            os: ubuntu-latest-x64
+            python-version: "3.10"
+            os-image: ubuntu-latest
+            windows-wsl: not_windows
+            tox-env: lint
+            tox-args: --color=always
+          - py-env: py310
+            py-style: coverage
+            os: ubuntu-latest-x64
+            python-version: "3.10"
+            os-image: ubuntu-latest
+            windows-wsl: not_windows
+            tox-env: coverage
+
+          # set vars for tox-env
+          - py-env: py310
+            py-style: wheel
+            python-version: "3.10"
+            tox-env: py310-wheel
+          - py-env: py311
+            py-style: wheel
+            python-version: "3.11"
+            tox-env: py311-wheel
+
+          - py-env: py310
+            py-style: sdist
+            python-version: "3.10"
+            tox-env: py310-sdist
+          - py-env: py311
+            py-style: sdist
+            python-version: "3.11"
+            tox-env: py311-sdist
+
+          # set vars for os & conda-forge
+          - os: ubuntu-latest-x64
+            os-image: ubuntu-latest
+            windows-wsl: not_windows
+          - os: macos-latest-x64
+            os-image: macos-latest
+            windows-wsl: not_windows
+          - os: windows_debian-latest-x64
+            os-image: windows-latest
+            windows-wsl: Debian
+            shell: "wsl-sh {0}"
+          - os: windows_ubuntu-latest-x64
+            os-image: windows-latest
+            windows-wsl: Ubuntu-22.04
+            shell: "wsl-sh {0}"
+          - os: windows_opensuse-latest-x64
+            os-image: windows-latest
+            windows-wsl: openSUSE-Leap-15.2
+            shell: "wsl-sh {0}"
+    runs-on: ${{ matrix.os-image }}
+    steps:
+      - if: matrix.windows-wsl != 'not_windows'
+        uses: Vampire/setup-wsl@v1.3.4
+        name: Setup WSL
+        id: setup-wsl
+        with:
+          distribution: ${{ matrix.windows-wsl }}
+          wsl-shell-command: sh '{0}'
+          set-as-default: 'true'
+          wsl-conf: |
+            [automount]
+            enabled = true
+            root = /
+            options = "metadata,umask=022,fmask=011,case=off"
+            mountFsTab = true
+            [interop]
+            enabled = false
+            appendWindowsPath = false
+          additional-packages:
+            git
+            git-lfs
+            curl
+            wget
+            ca-certificates
+            file
+            tar
+
+      # WARNING: RUNNER_USER doesn't normally exist for Windows runners, it will be invalid if used in CMD/PWRSH
+      - if: matrix.windows-wsl != 'not_windows'
+        name: Set WSL Extra Env Vars (WSL)
+        id: set-wsl-extra-env-vars
+        continue-on-error: true
+        shell: wsl-sh {0}
+        env:
+          WSLENV: GITHUB_ENV/p
+        run: |
+          echo RUNNER_USER=$USER>>$GITHUB_ENV
+
+      - if: matrix.windows-wsl != 'not_windows'
+        name: Set WSLENV (WIN32)
+        id: set-wslenv
+        continue-on-error: true
+        shell: cmd
+        run: |
+          echo WIN_USER=%USERNAME%>>%GITHUB_ENV%
+          echo WIN_HOME=%USERPROFILE%>>%GITHUB_ENV%
+          echo WSLENV=${{ env.WSLENV_BASE }}:${{ env.WSLENV_APPEND }}>>%GITHUB_ENV%
+
+      - if: matrix.windows-wsl != 'not_windows'
+        name: Runner Info (WIN32)
+        id: runner-info-win32
+        continue-on-error: true
+        shell: cmd
+        run: |
+          echo OS: ${{ runner.os }}
+          echo ARCH: ${{ runner.arch }}
+          echo matrix:
+          echo   .os: ${{ matrix.os }}
+          echo   .tox-env: ${{ matrix.tox-env }}
+          echo   .windows-wsl: ${{ matrix.windows-wsl }}
+          echo where git:
+          where git
+          echo git version:
+          git version
+          echo Env:
+          set
+          reg query HKEY_CURRENT_USER\Environment
+          reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+
+      - if: matrix.windows-wsl != 'not_windows'
+        name: Runner Info (WIN32 sh)
+        id: runner-info-win32-sh
+        continue-on-error: true
+        shell: sh
+        run: |
+          echo OS: ${{ runner.os }}
+          echo ARCH: ${{ runner.arch }}
+          echo matrix:
+          echo   .os: ${{ matrix.os }}
+          echo   .tox-env: ${{ matrix.tox-env }}
+          echo   .windows-wsl: ${{ matrix.windows-wsl }}
+          echo which git:
+          which git
+          echo git version:
+          git version
+          echo Env:
+          printenv | sort
+
+      - name: Runner Info (Linux, macOS, WSL)
+        id: runner-info
+        continue-on-error: true
+        run: |
+          echo OS: ${{ runner.os }}
+          echo ARCH: ${{ runner.arch }}
+          echo matrix:
+          echo   Dimensions:
+          echo     .os: ${{ matrix.os }}
+          echo     .py-env: ${{ matrix.py-env }}
+          echo     .py-style: ${{ matrix.py-style }}
+          echo   Calculated:
+          echo     .python-version: ${{ matrix.python-version }}
+          echo     .os-image: ${{ matrix.os-image }}
+          echo     .windows-wsl: ${{ matrix.windows-wsl }}
+          echo     .tox-env: ${{ matrix.tox-env }}
+          echo     .tox-args: ${{ matrix.tox-args || '' }}
+          echo which git:
+          which git
+          echo git version:
+          git version
+          echo Env:
+          printenv | sort
+
+      - name: Checkout Repo
+        id: checkout-repo
+        uses: actions/checkout@v3.0.2
+
+      - name: Override Python Version For Work Env
+        id: override-python-version
+        run: |
+          echo "BEFORE:"
+          cat ./conda-environment.yml
+          sed -i.old -e 's/  - python[<>=]\{1,5\}.*/  - python=${{ matrix.python-version }}/' ./conda-environment.yml
+          echo ""
+          echo "AFTER:"
+          cat ./conda-environment.yml
+
+      - name: batteries-forking-included
+        id: batteries-forking-included
+        run: |
+          ./bootstrap.sh --dev
+
+      - name: Test - ${{ matrix.tox-env }}
+        id: test-tox
+        run: |
+          . ./activate.sh
+          tox -e ${{ matrix.tox-env }} -- ${{ matrix.tox-args || '-p sugar --force-sugar --color=yes' }}
+
+      - name: Upload BFI Logs
+        id: upload-bfi-logs
+        if: always()
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: bfi-logs-${{ matrix.os }}-${{ matrix.tox-env }}
+          if-no-files-found: error
+          path: |
+            ${{ github.workspace }}/bfi_temp/**/log/**
+
+      - name: Upload Test Report Artifacts
+        id: upload-test-report-artifacts
+        if: matrix.tox-env != 'lint'
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: test-report-${{ matrix.os }}-${{ matrix.tox-env }}
+          if-no-files-found: error
+          path: |
+            .reports/**
+            junit.xml
+
+      - name: Upload Coverage Artifacts
+        id: upload-coverage-artifacts
+        if: matrix.tox-env == 'coverage'
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: code-coverage-report
+          if-no-files-found: error
+          path: |
+            coverage.xml
+            htmlcov/**
+            lcov.info
+
+  github-release:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/heads/release')
+    name: Create Github Release
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    steps:
+      - name: Runner Info
+        id: runner-info
+        run: |
+          echo OS: ${{ runner.os }}
+          echo ARCH: ${{ runner.arch }}
+
+      - name: Checkout Repo
+        id: checkout-repo
+        uses: actions/checkout@v3.0.2
+
+      - name: batteries-forking-included
+        id: batteries-forking-included
+        run: |
+          ./bootstrap.sh --dev
+
+      - name: Process Version Number
+        id: process-version
+        run: |
+          . ./activate.sh
+          echo ::set-output name=version::$(poetry version --short)
+          [[ "$(poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || echo ::set-output name=prerelease::true
+
+      - name: Check Tag Doesn't Exist
+        id: check-tag-does-not-exist
+        run: |
+          . ./activate.sh
+          echo "${{ steps.process-version.outputs.version }}"
+          echo ""
+          git tag
+          echo ""
+          echo "Match:"
+          echo "$(git tag | grep -e "^${{ steps.process-version.outputs.version }}$")"
+          echo ""
+          if [[ $(git tag | grep -e "^${{ steps.process-version.outputs.version }}$") ]]; then
+            echo "Tag already exists."
+            exit 2
+          fi
+
+      - name: Check Branch Name
+        id: check-branch-name
+        run: |
+          . ./activate.sh
+          if [[ \
+            "$(echo ${{ github.ref_name  }} | sed 's/release\///g;s/\//./g')" != \
+            "${{ steps.process-version.outputs.version }}" \
+          ]]; then
+            echo "Release branch name and version number mismatch."
+            exit 2
+          fi
+
+      - name: Download Build Products
+        id: download-build-products
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: build-products
+          path: dist
+
+      - name: Create Release
+        id: create-release
+        uses: ncipollo/release-action@v1.10.0
+        with:
+          commit: ${{ github.sha }}
+          artifacts: "dist/*"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          tag: ${{ steps.process-version.outputs.version }}
+          prerelease: ${{ steps.process-version.outputs.prerelease == 'true' }}
+
+      - name: Upload BFI Logs
+        id: upload-bfi-logs
+        if: always()
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: bfi-logs-${{ matrix.os }}-${{ matrix.tox-env }}
+          if-no-files-found: error
+          path: |
+            ${{ github.workspace }}/bfi_temp/**/log/**
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/heads/release')
+    name: Publish to PyPI
+
+    runs-on: ubuntu-latest
+    needs: [build, test, github-release]
+
+    steps:
+      - name: Runner Info
+        id: runner-info
+        run: |
+          echo OS: ${{ runner.os }}
+          echo ARCH: ${{ runner.arch }}
+
+      - name: Checkout Repo
+        id: checkout-repo
+        uses: actions/checkout@v3.0.2
+
+      - name: batteries-forking-included
+        id: batteries-forking-included
+        run: |
+          ./bootstrap.sh --dev
+
+      - name: Download Build Products
+        id: download-build-products
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: build-products
+          path: dist
+
+      - name: Publish to PyPI
+        id: publish-to-pypi
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          . ./activate.sh
+          poetry publish
+
+      - name: Upload BFI Logs
+        id: upload-bfi-logs
+        if: always()
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: bfi-logs-${{ matrix.os }}-${{ matrix.tox-env }}
+          if-no-files-found: error
+          path: |
+            ${{ github.workspace }}/bfi_temp/**/log/**
