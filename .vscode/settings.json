@@ -841,4 +841,19 @@
         "titleBar.inactiveForeground": "#e7e7e799"
     },
     "peacock.color": "#c64040",
+    "Lua.workspace.library": [
+        "/Users/marximus/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data",
+        "/Users/marximus/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data/core/lualib",
+        ".vscode/factorio"
+    ],
+    "Lua.workspace.userThirdParty": [
+        "/Users/marximus/Library/Application Support/Code/User/workspaceStorage/0c920154797a9d4e25dc73e0c632db83/justarandomgeek.factoriomod-debug/sumneko-3rd"
+    ],
+    "factorio.versions": [
+        {
+            "name": "Steam",
+            "factorioPath": "~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/MacOS/factorio"
+        }
+    ],
+    "Lua.workspace.checkThirdParty": "ApplyInMemory",
 }
