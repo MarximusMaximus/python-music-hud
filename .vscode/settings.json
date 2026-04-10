@@ -395,6 +395,24 @@
             "italic": false
         },
         {
+            "tag": "pyright: ignore[",
+            "color": "#9900CC",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "pyright: ignore",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
             "tag": "cspell:disable-line",
             "color": "#9900CC",
             "strikethrough": false,
