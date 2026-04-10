@@ -4607,7 +4607,7 @@ def; poetry_install() {
             call log_debug "poetry install args: ${poetry_args}"
 
             # shellcheck disable=SC2086  # we actually want the variable to get split
-            call teetty_G poetry install --sync ${poetry_args}
+            call teetty_G poetry install ${poetry_args}
             ret=$?
             if [ "$ret" -ne 0 ]; then
                 call log_fatal "'poetry install' exited with error code: %d" "$ret"
