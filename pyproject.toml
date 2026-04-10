@@ -14,7 +14,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: Pytest",
     "Intended Audience :: Developers",
-    "Topic :: Software Development :: Testing",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -49,7 +48,7 @@ include = [
 # similarly, we need to specify a valid version of python
 [tool.poetry.dependencies]
 poetry = ">1.3.0"  # conda controls poetry version
-pyOpenSSL = ">1"  # conda congtrol pyOpenSSL version
+pyOpenSSL = ">1"  # conda control pyOpenSSL version
 PySocks = ">1"  # conda control PySocks version
 pip = ">1"  # prevents poetry from removing it
 setuptools = ">1"  # prevents poetry from removing it
@@ -94,6 +93,7 @@ esbonio = "^0.14.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.mypy]
 python_version="3.10"
@@ -219,6 +219,7 @@ reportUnusedCallResult="error"  # was "none"
 minversion = 7.1
 # make XPASS ("unexpectedly passing") result to fail the test suite
 xfail_strict = true
+# cspell: disable-next-line
 addopts = [
     # report details (verbose)
     "-v",
@@ -412,7 +413,7 @@ class-rgx = "[^\\W\\da-z][^\\W]+$"
 const-naming-style = "UPPER_CASE"
 
 # Naming style matching correct function names.
-# function-naming-style = "camelCase" but allow underscoes
+# function-naming-style = "camelCase" but allow underscores
 function-rgx = "([^\\W\\dA-Z].{2,}|__[^\\W\\dA-Z].+__)$"
 
 # Good variable names which should always be accepted, separated by a comma.
@@ -782,6 +783,7 @@ missing-member-hint-distance = 1
 missing-member-max-choices = 1
 
 # Regex pattern to define which classes are considered mixins.
+# cspell: disable-next-line
 mixin-class-rgx = ".*[Mm]ixin"
 
 # List of decorators that change the signature of a decorated function.
