@@ -3453,6 +3453,12 @@ call ensure_include_GXY "$(get_my_real_dir_fullpath)/bfi-base.sh"
             RUN_EXEC="$(echo "${RUN_EXEC}" | sed -r 's/^ *//' | sed -r 's/ *$//' )"
             call log_ultradebug "RUN_EXEC=%s" "${RUN_EXEC}"
 
+            if [ "${ORIGINAL_RUN_EXEC_NAME}" = "" ]; then
+                ORIGINAL_RUN_EXEC_NAME="${RUN_EXEC}"
+                call log_ultradebug "ORIGINAL_RUN_EXEC_NAME empty, setting to RUN_EXEC"
+                call log_ultradebug "ORIGINAL_RUN_EXEC_NAME=%s" "${ORIGINAL_RUN_EXEC_NAME}"
+            fi
+
             printf "%s is " "${ORIGINAL_RUN_EXEC_NAME}"
             if {
                 [ "${ORIGINAL_RUN_EXEC_NAME}" != "echo" ] &&
