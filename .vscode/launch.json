@@ -5,6 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name":"Run python-music-hud-tv",
+            "type":"f5anything",
+            "request":"launch",
+            "command":"\"${workspaceFolder}/src/python_music_hud_tv/bin/python-music-hud-tv.py\"",
+            "terminalName": "Python Run Console",
+        },
+        {
+            "name":"Debug python-music-hud-tv",
+            "type":"python",
+            "request":"launch",
+            "program":"${workspaceFolder}/src/python_music_hud_tv/bin/python-music-hud-tv.py",
+            "console":"integratedTerminal",
+            "justMyCode":true
+        },
+        {
             "name": "Python: Debug Tests (Builtin)",
             "type": "python",
             "request": "launch",
