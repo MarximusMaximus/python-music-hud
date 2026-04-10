@@ -39,6 +39,9 @@ from http.server import (
     HTTPServer                      as http_server_HTTPServer,
     BaseHTTPRequestHandler          as http_server_BaseHTTPRequestHandler,
 )
+from pathlib import (
+    Path                            as pathlib_Path,
+)
 from threading import (
     Thread                          as threading_Thread,
 )
@@ -91,6 +94,9 @@ class MusicData(TypedDict):
 Application = Any
 AppleMusicTrack = Any
 SpotifyTrack = Any
+
+# pylint: disable=invalid-name
+html = str
 
 #endregion Types
 ################################################################################
@@ -462,6 +468,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         """
         TODO
         """
+        # pylint: disable=possibly-unused-variable
 
         parsed_path = urllib_parse_urlparse(self.path)
         real_path = parsed_path.path
@@ -472,11 +479,11 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
         music_data = getMusicData()
 
-        current_dance_style_header: str = ""
-        next_divider: str = ""
-        next_header: str = ""
-        next_dance_style_header: str = ""
-        next_next_header: str = ""
+        current_dance_style_header: str = ""  # pyright: ignore[reportUnusedVariable]
+        next_divider: str = ""  # pyright: ignore[reportUnusedVariable]
+        next_header: str = ""  # pyright: ignore[reportUnusedVariable]
+        next_dance_style_header: str = ""  # pyright: ignore[reportUnusedVariable]
+        next_next_header: str = ""  # pyright: ignore[reportUnusedVariable]
 
         if music_data["songs"]["next_next"]["title"] in SECRET_TITLES:
             music_data["songs"]["next_next"]["title"] = "*****"
@@ -525,27 +532,27 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-            next_dance_style_header = ""
-            next_header = ""
-            next_next_header = ""
-            next_divider = "<hr>"
+            next_dance_style_header = ""  # pyright: ignore[reportUnusedVariable]
+            next_header = ""  # pyright: ignore[reportUnusedVariable]
+            next_next_header = ""  # pyright: ignore[reportUnusedVariable]
+            next_divider = "<hr>"  # pyright: ignore[reportUnusedVariable]
 
         music_data["songs"]["current"]["comment"] = commentToStyle(music_data["songs"]["current"]["comment"])
 
         if music_data["songs"]["current"]["title"]:
-            current_dance_style_header = "Dance Style Info:"
+            current_dance_style_header = "Dance Style Info:"  # pyright: ignore[reportUnusedVariable]
         else:
             music_data["current_play_head_time_and_length_pretty"] = ""
 
         if music_data["songs"]["next"]["title"]:
             music_data["songs"]["next"]["comment"] = commentToStyle(music_data["songs"]["next"]["comment"])
 
-            next_divider = "<hr>"
-            next_header = "Next Up:"
-            next_dance_style_header = "Dance Style Info:"
+            next_divider = "<hr>"  # pyright: ignore[reportUnusedVariable]
+            next_header = "Next Up:"  # pyright: ignore[reportUnusedVariable]
+            next_dance_style_header = "Dance Style Info:"  # pyright: ignore[reportUnusedVariable]
 
             if music_data["songs"]["next"]["title"] == LAST_DANCE_TITLE:
-                next_header = "LAST DANCE:"
+                next_header = "LAST DANCE:"  # pyright: ignore[reportUnusedVariable]
 
             if music_data["songs"]["next"]["artist"]:
                 music_data["songs"]["next"]["artist"] = f'by {music_data["songs"]["next"]["artist"]}'
@@ -553,7 +560,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         if music_data["songs"]["next_next"]["title"]:
             music_data["songs"]["next_next"]["comment"] = commentToStyle(music_data["songs"]["next_next"]["comment"])
 
-            next_next_header = "Followed by:<br/>"
+            next_next_header = "Followed by:<br/>"  # pyright: ignore[reportUnusedVariable]
 
         if music_data["songs"]["current"]["title"] == LAST_CALL_TITLE:
             music_data["songs"]["next"]["title"] = "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
@@ -597,196 +604,23 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-            current_dance_style_header = ""
-            next_dance_style_header = ""
-            next_divider = ""
-            next_header = ""
-            next_next_header = ""
+            current_dance_style_header = ""  # pyright: ignore[reportUnusedVariable]
+            next_dance_style_header = ""  # pyright: ignore[reportUnusedVariable]
+            next_divider = ""  # pyright: ignore[reportUnusedVariable]
+            next_header = ""  # pyright: ignore[reportUnusedVariable]
+            next_next_header = ""  # pyright: ignore[reportUnusedVariable]
         else:
             music_data["songs"]["current"]["title"] = f'<div class="title">{music_data["songs"]["current"]["title"]}</div>'
 
         if music_data["songs"]["current"]["artist"]:
             music_data["songs"]["current"]["artist"] = f'by {music_data["songs"]["current"]["artist"]}'
 
-        real_time = datetime_datetime.now().strftime("%-I:%M:%S %p")
+        real_time = datetime_datetime.now().strftime("%-I:%M:%S %p")  # pyright: ignore[reportUnusedVariable]
 
-        message = (
-            f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <html lang="en">
-            <!--<meta http-equiv="refresh" content="1" />-->
-            <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-            <style>
-                body {{
-                    font-family: Big Caslon, -system, -system-font, Arial;
-                    background-color: {BACKGROUND_COLOR};
-                    color: rgba({FOREGROUND_COLOR}, 1);
-                    overflow: hidden;
-                }}
+        with open(pathlib_Path(MY_DIR_FULLPATH + "/hud.html.j2"), "rt", encoding="utf8") as f:
+            raw_message = f.read()
 
-                body table {{
-                    margin: 0;
-                    margin-left: 1%;
-                    margin-right: 1%;
-                }}
-
-                ul {{
-                    -webkit-column-count: 2;
-                    margin: 0;
-                    margin-left: 0.5em;
-                }}
-
-                li {{
-                    margin-left: 0.5em;
-                }}
-
-                hr {{
-                    border: 1px;
-                    border-style: solid;
-                    margin-top: 20px;
-                    margin-bottom: 20px;
-                }}
-
-                .bottom {{
-                    position: absolute;
-                    top: 600px;
-                    width: 1900px;
-                }}
-                .bottom-right {{
-                    position: absolute;
-                    top: 646px;
-                    left: 1000px;
-                    width: 800px;
-                }}
-
-                .currentTitle {{
-                    font-size: 4vw;
-                }}
-                .currentTitle div.title {{
-                    width: 68%;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }}
-                .currentTitle div.time {{
-                    position: absolute;
-                    top: 1%;
-                    right: 1%;
-                }}
-                .currentArtist {{
-                    font-size: 2vw;
-                    color: rgba({FOREGROUND_COLOR}, 0.8);
-                }}
-                .currentStyleHeader {{
-                    font-size: 2vw;
-                    color: rgba({FOREGROUND_COLOR}, 0.8);
-                }}
-                .currentStyle {{
-                    font-size: 4.2vw;
-                }}
-
-                table.nextTable {{
-                    color: rgba({FOREGROUND_COLOR}, 0.7);
-                }}
-
-                table.nextNextTable {{
-                    font-size: 1.5vw;
-                    color: rgba({FOREGROUND_COLOR}, 0.7);
-                }}
-
-                .headerNext {{
-                    font-size: 2.5vw;
-                }}
-                .nextTitle {{
-                    font-size: 2vw;
-                }}
-                .nextArtist {{
-                    font-size: 1.5vw;
-                }}
-                .nextStyleHeader {{
-                    font-size: 1.5vw;
-                }}
-                .nextStyle {{
-                    font-size: 2vw;
-                }}
-
-                div.realTime {{
-                    position: absolute;
-                    bottom: 1%;
-                    right: 1%;
-                    font-size: 4vw;
-                    color: rgba({FOREGROUND_COLOR}, 0.4);
-                }}
-
-                div.bigTitle {{
-                    font-size: 7.5vw;
-                    text-align: center;
-                    width: 100%;
-                }}
-            </style>
-            </head>
-            <body><div max-width="100%">
-                <table width="98%">
-                    <tr><td class="currentTitle">
-                        <div class="time">{music_data["current_play_head_time_and_length_pretty"]}</div>
-                        {music_data["songs"]["current"]["title"]}
-                    </td></tr>
-                </table>
-                <table width="98%">
-                    <tr><td class="currentArtist">
-                        {music_data["songs"]["current"]["artist"]}
-                    </td></tr>
-                    <tr><td class="currentStyleHeader">
-                        {current_dance_style_header}
-                    </td></tr>
-                    <tr><td class="currentStyle">
-                        <ul>
-                            {music_data["songs"]["current"]["comment"]}
-                        </ul>
-                    </td></tr>
-                </table>
-                <div class="bottom">
-                    {next_divider}
-                    <table class="nextTable">
-                        <tr>
-                            <td class="headerNext">
-                                {next_header}
-                            </td>
-                        </tr>
-                        <tr><td class="nextTitle">
-                            {music_data["songs"]["next"]["title"]} {music_data["songs"]["next_next"]["duration_pretty"]}
-                        </td></tr>
-                        <tr><td class="nextArtist">
-                            {music_data["songs"]["next"]["artist"]}
-                        </td></tr>
-                        <tr><td class="nextStyleHeader">
-                            {next_dance_style_header}
-                        </td></tr>
-                        <tr><td class="nextStyle">
-                            <ul>
-                                {music_data["songs"]["next"]["comment"]}
-                            </ul>
-                        </td></tr>
-                    </table>
-                </div>
-                <div class="bottom-right">
-                    <table class="nextNextTable">
-                        <tr>
-                            <td>
-                                {next_next_header} {music_data["songs"]["next_next"]["title"]} {music_data["songs"]["next_next"]["duration_pretty"]} {music_data["songs"]["next_next"]["comment"]}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="realTime">
-                    {real_time}
-                </div>
-            </div></body>
-            </html>
-            """  # noqa: E501,B950
-        )
+        message = raw_message.format_map({**globals(), **locals()})
 
         message_bytes = message.encode("utf8", errors="ignore")
         self.send_response(200)

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<html lang="en">
+<!--<meta http-equiv="refresh" content="1" />-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style>
+    body {{
+        font-family: Big Caslon, -system, -system-font, Arial;
+        background-color: {BACKGROUND_COLOR};
+        color: rgba({FOREGROUND_COLOR}, 1);
+        overflow: hidden;
+    }}
+
+    body table {{
+        margin: 0;
+        margin-left: 1%;
+        margin-right: 1%;
+    }}
+
+    ul {{
+        -webkit-column-count: 2;
+        margin: 0;
+        margin-left: 0.5em;
+    }}
+
+    li {{
+        margin-left: 0.5em;
+    }}
+
+    hr {{
+        border: 1px;
+        border-style: solid;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }}
+
+    .bottom {{
+        position: absolute;
+        top: 600px;
+        width: 1900px;
+    }}
+    .bottom-right {{
+        position: absolute;
+        top: 646px;
+        left: 1000px;
+        width: 800px;
+    }}
+
+    .currentTitle {{
+        font-size: 4vw;
+    }}
+    .currentTitle div.title {{
+        width: 68%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }}
+    .currentTitle div.time {{
+        position: absolute;
+        top: 1%;
+        right: 1%;
+    }}
+    .currentArtist {{
+        font-size: 2vw;
+        color: rgba({FOREGROUND_COLOR}, 0.8);
+    }}
+    .currentStyleHeader {{
+        font-size: 2vw;
+        color: rgba({FOREGROUND_COLOR}, 0.8);
+    }}
+    .currentStyle {{
+        font-size: 4.2vw;
+    }}
+
+    table.nextTable {{
+        color: rgba({FOREGROUND_COLOR}, 0.7);
+    }}
+
+    table.nextNextTable {{
+        font-size: 1.5vw;
+        color: rgba({FOREGROUND_COLOR}, 0.7);
+    }}
+
+    .headerNext {{
+        font-size: 2.5vw;
+    }}
+    .nextTitle {{
+        font-size: 2vw;
+    }}
+    .nextArtist {{
+        font-size: 1.5vw;
+    }}
+    .nextStyleHeader {{
+        font-size: 1.5vw;
+    }}
+    .nextStyle {{
+        font-size: 2vw;
+    }}
+
+    div.realTime {{
+        position: absolute;
+        bottom: 1%;
+        right: 1%;
+        font-size: 4vw;
+        color: rgba({FOREGROUND_COLOR}, 0.4);
+    }}
+
+    div.bigTitle {{
+        font-size: 7.5vw;
+        text-align: center;
+        width: 100%;
+    }}
+</style>
+</head>
+<body><div max-width="100%">
+    <table width="98%">
+        <tr><td class="currentTitle">
+            <div class="time">{music_data[current_play_head_time_and_length_pretty]}</div>
+            {music_data[songs][current][title]}
+        </td></tr>
+    </table>
+    <table width="98%">
+        <tr><td class="currentArtist">
+            {music_data[songs][current][artist]}
+        </td></tr>
+        <tr><td class="currentStyleHeader">
+            {current_dance_style_header}
+        </td></tr>
+        <tr><td class="currentStyle">
+            <ul>
+                {music_data[songs][current][comment]}
+            </ul>
+        </td></tr>
+    </table>
+    <div class="bottom">
+        {next_divider}
+        <table class="nextTable">
+            <tr>
+                <td class="headerNext">
+                    {next_header}
+                </td>
+            </tr>
+            <tr><td class="nextTitle">
+                {music_data[songs][next][title]} {music_data[songs][next_next][duration_pretty]}
+            </td></tr>
+            <tr><td class="nextArtist">
+                {music_data[songs][next][artist]}
+            </td></tr>
+            <tr><td class="nextStyleHeader">
+                {next_dance_style_header}
+            </td></tr>
+            <tr><td class="nextStyle">
+                <ul>
+                    {music_data[songs][next][comment]}
+                </ul>
+            </td></tr>
+        </table>
+    </div>
+    <div class="bottom-right">
+        <table class="nextNextTable">
+            <tr>
+                <td>
+                    {next_next_header} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="realTime">
+        {real_time}
+    </div>
+</div></body>
+</html>
