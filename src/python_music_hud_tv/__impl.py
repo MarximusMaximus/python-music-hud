@@ -32,9 +32,8 @@ logger_log = logger.log
 #region stdlib
 
 from datetime import (
-    datetime                            as datetime_datetime,
+    datetime                        as datetime_datetime,
 )
-
 from http.server import (
     HTTPServer                      as http_server_HTTPServer,
     BaseHTTPRequestHandler          as http_server_BaseHTTPRequestHandler,
