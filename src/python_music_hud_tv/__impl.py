@@ -90,6 +90,14 @@ class MusicData(TypedDict):
     current_playlist_name: str
     songs: _MusicData_Songs
 
+class PageData(TypedDict):
+    current_dance_style_header: str
+    next_divider: str
+    next_header: str
+    next_dance_style_header: str
+    next_next_header: str
+    real_time: str
+
 Application = Any
 AppleMusicTrack = Any
 SpotifyTrack = Any
@@ -478,11 +486,14 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
         music_data = getMusicData()
 
-        current_dance_style_header: str = ""  # pyright: ignore[reportUnusedVariable]
-        next_divider: str = ""  # pyright: ignore[reportUnusedVariable]
-        next_header: str = ""  # pyright: ignore[reportUnusedVariable]
-        next_dance_style_header: str = ""  # pyright: ignore[reportUnusedVariable]
-        next_next_header: str = ""  # pyright: ignore[reportUnusedVariable]
+        page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
+            "current_dance_style_header": "",
+            "next_divider": "",
+            "next_header": "",
+            "next_dance_style_header": "",
+            "next_next_header": "",
+            "real_time": "",
+        }
 
         if music_data["songs"]["next_next"]["title"] in SECRET_TITLES:
             music_data["songs"]["next_next"]["title"] = "*****"
@@ -531,10 +542,10 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-            next_dance_style_header = ""  # pyright: ignore[reportUnusedVariable]
-            next_header = ""  # pyright: ignore[reportUnusedVariable]
-            next_next_header = ""  # pyright: ignore[reportUnusedVariable]
-            next_divider = "<hr>"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_dance_style_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_next_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_divider"] = "<hr>"  # pyright: ignore[reportUnusedVariable]
 
         music_data["songs"]["current"]["comment"] = commentToStyle(music_data["songs"]["current"]["comment"])
 
@@ -546,12 +557,12 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         if music_data["songs"]["next"]["title"]:
             music_data["songs"]["next"]["comment"] = commentToStyle(music_data["songs"]["next"]["comment"])
 
-            next_divider = "<hr>"  # pyright: ignore[reportUnusedVariable]
-            next_header = "Next Up:"  # pyright: ignore[reportUnusedVariable]
-            next_dance_style_header = "Dance Style Info:"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_divider"] = "<hr>"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_header"] = "Next Up:"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_dance_style_header"] = "Dance Style Info:"  # pyright: ignore[reportUnusedVariable]
 
             if music_data["songs"]["next"]["title"] == LAST_DANCE_TITLE:
-                next_header = "LAST DANCE:"  # pyright: ignore[reportUnusedVariable]
+                page_data["next_header"] = "LAST DANCE:"  # pyright: ignore[reportUnusedVariable]
 
             if music_data["songs"]["next"]["artist"]:
                 music_data["songs"]["next"]["artist"] = f'by {music_data["songs"]["next"]["artist"]}'
@@ -559,7 +570,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         if music_data["songs"]["next_next"]["title"]:
             music_data["songs"]["next_next"]["comment"] = commentToStyle(music_data["songs"]["next_next"]["comment"])
 
-            next_next_header = "Followed by:<br/>"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_next_header"] = "Followed by:<br/>"  # pyright: ignore[reportUnusedVariable]
 
         if music_data["songs"]["current"]["title"] == LAST_CALL_TITLE:
             music_data["songs"]["next"]["title"] = "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
@@ -603,18 +614,18 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-            current_dance_style_header = ""  # pyright: ignore[reportUnusedVariable]
-            next_dance_style_header = ""  # pyright: ignore[reportUnusedVariable]
-            next_divider = ""  # pyright: ignore[reportUnusedVariable]
-            next_header = ""  # pyright: ignore[reportUnusedVariable]
-            next_next_header = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["current_dance_style_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_dance_style_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_divider"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["next_next_header"] = ""  # pyright: ignore[reportUnusedVariable]
         else:
             music_data["songs"]["current"]["title"] = f'<div class="title">{music_data["songs"]["current"]["title"]}</div>'
 
         if music_data["songs"]["current"]["artist"]:
             music_data["songs"]["current"]["artist"] = f'by {music_data["songs"]["current"]["artist"]}'
 
-        real_time = datetime_datetime.now().strftime("%-I:%M:%S %p")  # pyright: ignore[reportUnusedVariable]
+        page_data["real_time"] = datetime_datetime.now().strftime("%-I:%M:%S %p")  # pyright: ignore[reportUnusedVariable]
 
         with open(pathlib_Path(MY_DIR_FULLPATH + "/hud.html.j2"), "rt", encoding="utf8") as f:
             raw_message = f.read()

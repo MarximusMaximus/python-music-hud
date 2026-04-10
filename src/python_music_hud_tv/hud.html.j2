@@ -125,7 +125,7 @@
             {music_data[songs][current][artist]}
         </td></tr>
         <tr><td class="currentStyleHeader">
-            {current_dance_style_header}
+            {page_data[current_dance_style_header]}
         </td></tr>
         <tr><td class="currentStyle">
             <ul>
@@ -134,11 +134,11 @@
         </td></tr>
     </table>
     <div class="bottom">
-        {next_divider}
+        {page_data[next_divider]}
         <table class="nextTable">
             <tr>
                 <td class="headerNext">
-                    {next_header}
+                    {page_data[next_header]}
                 </td>
             </tr>
             <tr><td class="nextTitle">
@@ -148,7 +148,7 @@
                 {music_data[songs][next][artist]}
             </td></tr>
             <tr><td class="nextStyleHeader">
-                {next_dance_style_header}
+                {page_data[next_dance_style_header]}
             </td></tr>
             <tr><td class="nextStyle">
                 <ul>
@@ -161,13 +161,13 @@
         <table class="nextNextTable">
             <tr>
                 <td>
-                    {next_next_header} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}
+                    {page_data[next_next_header]} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}
                 </td>
             </tr>
         </table>
     </div>
     <div class="realTime">
-        {real_time}
+        {page_data[real_time]}
     </div>
 </div></body>
 </html>
