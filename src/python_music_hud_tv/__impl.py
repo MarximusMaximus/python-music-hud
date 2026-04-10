@@ -258,8 +258,28 @@ def appleMusicGetNextTrack(offset: int = 1) -> Track:
             current_track = g_app_apple_music.currentTrack()
             current_index = current_track.index()
             playlist_tracks = app_apple_music_playlist.tracks()
-            next_index = current_index + offset
-            app_apple_music_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
+            next_index = current_index + 1
+
+            loop_count = 0
+            while True:
+                loop_count = loop_count + 1
+                if loop_count >= 100:
+                    break
+
+                app_apple_music_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
+
+                if app_apple_music_track is not None:
+                    next_index = next_index + 1
+
+                    if app_apple_music_track.enabled():
+                        offset = offset - 1
+
+                loop_count = loop_count + 1
+                if (
+                    offset <= 0 or
+                    app_apple_music_track is None
+                ):
+                    break
 
     ret_track = appleMusicTrackToOurTrack(app_apple_music_track)
 
