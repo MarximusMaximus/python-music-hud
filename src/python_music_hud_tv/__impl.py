@@ -100,7 +100,6 @@ class PageData(TypedDict):
 
 Application = Any
 AppleMusicTrack = Any
-SpotifyTrack = Any
 
 # pylint: disable=invalid-name
 html = str
@@ -150,7 +149,6 @@ LAST_DANCE_TITLE = "(I've Had) The Time of My Life"
 #region Globals
 
 g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.apple.Music")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
-g_app_spotify: Any = SBApplication.applicationWithBundleIdentifier_("com.spotify.client")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
 #endregion Globals
 ################################################################################
@@ -285,50 +283,6 @@ def appleMusicGetNextTrack(offset: int = 1) -> Track:
 
     return ret_track
 
-def spotifyGetCurrentPlayHeadTimeInSeconds() -> int:
-    ret_time = 0
-
-    app_spotify = getApp("com.spotify.client")
-
-    if (
-        app_spotify is not None and
-        app_spotify.isRunning() and
-        app_spotify.playerState() == STATE_PLAYING
-    ):
-        ret_time = int(app_spotify.playerPosition())
-
-    return ret_time
-
-def spotifyGetCurrentTrack() -> Track:
-    ret_track: Track = {
-        "title": "",
-        "artist": "",
-        "duration_in_seconds": 0,
-        "duration_pretty": "",
-        "grouping": "",
-        "comment": "",
-    }
-
-    app_spotify = getApp("com.spotify.client")
-
-    if (
-        app_spotify is not None and
-        app_spotify.isRunning() and
-        app_spotify.playerState() == STATE_PLAYING
-    ):
-        track = app_spotify.currentTrack()
-        length = track.duration() // 1000
-        ret_track = {
-            "title": track.name(),
-            "artist": track.artist(),
-            "duration_in_seconds": length,
-            "duration_pretty": durationInSecondsToPretty(length),
-            "grouping": "",
-            "comment": "",
-        }
-
-    return ret_track
-
 def getMusicData() -> MusicData:
     """
     TODO
@@ -379,15 +333,6 @@ def getMusicData() -> MusicData:
         music_data["current_play_head_time_in_seconds"] = \
             appleMusicGetCurrentPlayHeadTimeInSeconds()
         music_data["current_playlist_name"] = appleMusicGetPlaylistName()
-    elif (
-        g_app_spotify is not None and
-        g_app_spotify.isRunning() and
-        g_app_spotify.playerState() == STATE_PLAYING
-    ):
-        logger.debug("getting info from Spotify App")
-        music_data["songs"]["current"] = spotifyGetCurrentTrack()
-        music_data["current_play_head_time_in_seconds"] = \
-            spotifyGetCurrentPlayHeadTimeInSeconds()
     else:
         logger.debug("no music app playing")
 
