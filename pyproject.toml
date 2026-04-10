@@ -88,7 +88,7 @@ packaging = ">1"
 pytest = "^7.1.2"
 pytest-xdist = "^2.5.0"
 pytest-subprocess = "^1.4.1"
-esbonio = "^0.14.0"
+esbonio = "^1.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
