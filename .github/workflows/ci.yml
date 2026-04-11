@@ -97,7 +97,7 @@ jobs:
       matrix:
         os: [
           # ubuntu-latest-x64,
-          macos-latest-x64,
+          macos-latest,
           # windows_debian-latest-x64,
           # windows_opensuse-latest-x64,
           # windows_ubuntu-latest-x64,
@@ -113,9 +113,9 @@ jobs:
           # create additional matrix entries for ubuntu & tox_env
           - py-env: py314
             py-style: lint
-            os: ubuntu-latest-x64
+            os: macos-latest
             python-version: "3.14"
-            os-image: ubuntu-latest
+            os-image: macos-latest
             windows-wsl: not_windows
             tox-env: lint
             tox-args: --color=always
@@ -132,24 +132,24 @@ jobs:
             tox-env: py310-sdist
 
           # set vars for os & conda-forge
-          - os: ubuntu-latest-x64
-            os-image: ubuntu-latest
-            windows-wsl: not_windows
-          - os: macos-latest-x64
+          # - os: ubuntu-latest-x64
+          #   os-image: ubuntu-latest
+          #   windows-wsl: not_windows
+          - os: macos-latest
             os-image: macos-latest
             windows-wsl: not_windows
-          - os: windows_debian-latest-x64
-            os-image: windows-latest
-            windows-wsl: Debian
-            shell: "wsl-sh {0}"
-          - os: windows_ubuntu-latest-x64
-            os-image: windows-latest
-            windows-wsl: Ubuntu-22.04
-            shell: "wsl-sh {0}"
-          - os: windows_opensuse-latest-x64
-            os-image: windows-latest
-            windows-wsl: openSUSE-Leap-15.2
-            shell: "wsl-sh {0}"
+          # - os: windows_debian-latest-x64
+          #   os-image: windows-latest
+          #   windows-wsl: Debian
+          #   shell: "wsl-sh {0}"
+          # - os: windows_ubuntu-latest-x64
+          #   os-image: windows-latest
+          #   windows-wsl: Ubuntu-22.04
+          #   shell: "wsl-sh {0}"
+          # - os: windows_opensuse-latest-x64
+          #   os-image: windows-latest
+          #   windows-wsl: openSUSE-Leap-15.2
+          #   shell: "wsl-sh {0}"
     runs-on: ${{ matrix.os-image }}
     steps:
       - if: matrix.windows-wsl != 'not_windows'
@@ -324,7 +324,7 @@ jobs:
   github-release:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/heads/release')
     name: Create Github Release
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: [build, test]
     steps:
       - name: Runner Info
@@ -412,7 +412,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/heads/release')
     name: Publish to PyPI
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: [build, test, github-release]
 
     steps:
