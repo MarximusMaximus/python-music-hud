@@ -44,7 +44,7 @@
         # (conflicts with region directives)
         E302, E305,
         # continuation line unaligned for hanging indent
-        # (disabling because it recommendes hanging indents greater than
+        # (disabling because it recommends hanging indents greater than
         # 4 spaces, as well as 0 spaces)
         E131,
         # module level import not at top of file
@@ -74,7 +74,7 @@
         #   Missing Commas (C81)
         # provided by mccabe
         # https://github.com/PyCQA/mccabe
-        #   Max complexity exceded (C901)
+        #   Max complexity exceeded (C901)
         C,
         # provided by flake8-docstrings (pydocstyle)
         # https://www.pydocstyle.org/en/stable/error_codes.html
