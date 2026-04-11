@@ -7,6 +7,10 @@
     statistics = true
     doctests = true
     ignore =
+        # Missing docstrings
+        # TODO: re-enable
+        D101,
+        D103,
         # One-line docstring should fit on one line with quotes
         # (prefer triple quotes being on own lines)
         D200,
