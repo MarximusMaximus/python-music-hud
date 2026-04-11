@@ -53,7 +53,7 @@ jobs:
 
       - name: Checkout Repo
         id: checkout-repo
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v6.0.2
 
       - name: batteries-forking-included
         id: batteries-forking-included
@@ -69,7 +69,7 @@ jobs:
       - name: Upload BFI Logs
         id: upload-bfi-logs
         if: always()
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: bfi-logs-build
           if-no-files-found: error
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload Build Products
         id: upload-build-products
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: build-products
           if-no-files-found: error
@@ -169,7 +169,7 @@ jobs:
     runs-on: ${{ matrix.os-image }}
     steps:
       - if: matrix.windows-wsl != 'not_windows'
-        uses: Vampire/setup-wsl@v1.3.4
+        uses: Vampire/setup-wsl@v6.0.0
         name: Setup WSL
         id: setup-wsl
         with:
@@ -281,7 +281,7 @@ jobs:
 
       - name: Checkout Repo
         id: checkout-repo
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v6.0.2
 
       - name: Override Python Version For Work Env
         id: override-python-version
@@ -307,7 +307,7 @@ jobs:
       - name: Upload BFI Logs
         id: upload-bfi-logs
         if: always()
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: bfi-logs-${{ matrix.os }}-${{ matrix.tox-env }}
           if-no-files-found: error
@@ -317,7 +317,7 @@ jobs:
       - name: Upload Test Report Artifacts
         id: upload-test-report-artifacts
         if: matrix.tox-env != 'lint'
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: test-report-${{ matrix.os }}-${{ matrix.tox-env }}
           if-no-files-found: error
@@ -328,7 +328,7 @@ jobs:
       - name: Upload Coverage Artifacts
         id: upload-coverage-artifacts
         if: matrix.tox-env == 'coverage'
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: code-coverage-report
           if-no-files-found: error
@@ -351,7 +351,7 @@ jobs:
 
       - name: Checkout Repo
         id: checkout-repo
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v6.0.2
 
       - name: batteries-forking-included
         id: batteries-forking-included
@@ -396,14 +396,14 @@ jobs:
 
       - name: Download Build Products
         id: download-build-products
-        uses: actions/download-artifact@v3.0.0
+        uses: actions/download-artifact@v8.0.1
         with:
           name: build-products
           path: dist
 
       - name: Create Release
         id: create-release
-        uses: ncipollo/release-action@v1.10.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           commit: ${{ github.sha }}
           artifacts: "dist/*"
@@ -417,7 +417,7 @@ jobs:
       - name: Upload BFI Logs
         id: upload-bfi-logs
         if: always()
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: bfi-logs-${{ matrix.os }}-${{ matrix.tox-env }}
           if-no-files-found: error
@@ -440,7 +440,7 @@ jobs:
 
       - name: Checkout Repo
         id: checkout-repo
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v6.0.2
 
       - name: batteries-forking-included
         id: batteries-forking-included
@@ -449,7 +449,7 @@ jobs:
 
       - name: Download Build Products
         id: download-build-products
-        uses: actions/download-artifact@v3.0.0
+        uses: actions/download-artifact@v8.0.1
         with:
           name: build-products
           path: dist
@@ -465,7 +465,7 @@ jobs:
       - name: Upload BFI Logs
         id: upload-bfi-logs
         if: always()
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: bfi-logs-${{ matrix.os }}-${{ matrix.tox-env }}
           if-no-files-found: error
