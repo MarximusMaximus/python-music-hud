@@ -306,7 +306,7 @@ jobs:
           name: test-report-${{ matrix.os }}-${{ matrix.tox-env }}
           if-no-files-found: error
           path: |
-            ${{ github.workspace }}/.reports/**/*
+            ${{ github.workspace }}/.reports/**
 
       - name: Upload Coverage Artifacts
         id: upload-coverage-artifacts
