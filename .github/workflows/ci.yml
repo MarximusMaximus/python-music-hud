@@ -124,12 +124,12 @@ jobs:
           - py-env: py314
             py-style: wheel
             python-version: "3.14"
-            tox-env: py310-wheel
+            tox-env: py314-wheel
 
           - py-env: py314
             py-style: sdist
             python-version: "3.14"
-            tox-env: py310-sdist
+            tox-env: py314-sdist
 
           # set vars for os & conda-forge
           # - os: ubuntu-latest-x64
