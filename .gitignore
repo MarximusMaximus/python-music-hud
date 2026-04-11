@@ -238,7 +238,7 @@ lcov.info
 lcov.xml
 
 # test & other report data
-.reports/
+reports/
 .pylint.d/
 junit.xml
 

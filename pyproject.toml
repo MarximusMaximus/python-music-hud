@@ -242,7 +242,7 @@ addopts = [
     # let's adopt the future mode already
     "--import-mode=importlib",
     # generate html report of test results (use the 'coverage' name for env b/c this is also used by that tox env)
-    "--html=.reports/test-report-coverage.html",
+    "--html=reports/test-report-coverage.html",
     # html report should be single file
     "--self-contained-html",
     # parallelize tests across available cpu cores
