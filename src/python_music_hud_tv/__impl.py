@@ -1,7 +1,6 @@
 """
 python-music-hud-tv
 """
-# flake8: noqa=D101
 ################################################################################
 #region Python Library Preamble
 
@@ -338,8 +337,10 @@ def getMusicData() -> MusicData:
     music_data["current_play_head_time_pretty"] = \
         durationInSecondsToPretty(music_data["current_play_head_time_in_seconds"])
 
-    music_data["current_play_head_time_and_length_pretty"] = \
-        f'{music_data["current_play_head_time_pretty"]}/{music_data["songs"]["current"]["duration_pretty"]}'
+    music_data["current_play_head_time_and_length_pretty"] = (
+        f'{music_data["current_play_head_time_pretty"]}/' +
+        f'{music_data["songs"]["current"]["duration_pretty"]}'
+    )
 
     return music_data
 
@@ -386,7 +387,10 @@ class Server():
     #     pass
 
     #---------------------------------------------------------------------------
-    def runServer(self, handler_cls: Type[http_server_BaseHTTPRequestHandler]) -> None:
+    def runServer(
+        self,
+        handler_cls: Type[http_server_BaseHTTPRequestHandler],
+    ) -> None:
         """
         TODO
         """
@@ -435,7 +439,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
     """
 
     #---------------------------------------------------------------------------
-    def do_GET(self) -> None:  # pylint: disable=invalid-name
+    def do_GET(self) -> None:  # pylint: disable=invalid-name  # noqa: C901
         """
         TODO
         """
@@ -506,56 +510,67 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-            page_data["next_dance_style_header"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_header"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_next_header"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_divider"] = "<hr>"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_dance_style_header"] = ""
+            page_data["next_header"] = ""
+            page_data["next_next_header"] = ""
+            page_data["next_divider"] = "<hr>"
 
-        music_data["songs"]["current"]["comment"] = commentToStyle(music_data["songs"]["current"]["comment"])
+        music_data["songs"]["current"]["comment"] = \
+            commentToStyle(music_data["songs"]["current"]["comment"])
 
         if music_data["songs"]["current"]["title"]:
-            current_dance_style_header = "Dance Style Info:"  # pyright: ignore[reportUnusedVariable]
+            page_data["current_dance_style_header"] = "Dance Style Info:"
         else:
             music_data["current_play_head_time_and_length_pretty"] = ""
 
         if music_data["songs"]["next"]["title"]:
-            music_data["songs"]["next"]["comment"] = commentToStyle(music_data["songs"]["next"]["comment"])
+            music_data["songs"]["next"]["comment"] = \
+                commentToStyle(music_data["songs"]["next"]["comment"])
 
-            page_data["next_divider"] = "<hr>"  # pyright: ignore[reportUnusedVariable]
-            page_data["next_header"] = "Next Up:"  # pyright: ignore[reportUnusedVariable]
-            page_data["next_dance_style_header"] = "Dance Style Info:"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_divider"] = "<hr>"
+            page_data["next_header"] = "Next Up:"
+            page_data["next_dance_style_header"] = "Dance Style Info:"
 
             if music_data["songs"]["next"]["title"] == LAST_DANCE_TITLE:
-                page_data["next_header"] = "LAST DANCE:"  # pyright: ignore[reportUnusedVariable]
+                page_data["next_header"] = "LAST DANCE:"
 
             if music_data["songs"]["next"]["artist"]:
-                music_data["songs"]["next"]["artist"] = f'by {music_data["songs"]["next"]["artist"]}'
+                music_data["songs"]["next"]["artist"] = (
+                    f'by {music_data["songs"]["next"]["artist"]}'
+                )
 
         if music_data["songs"]["next_next"]["title"]:
-            music_data["songs"]["next_next"]["comment"] = commentToStyle(music_data["songs"]["next_next"]["comment"])
+            music_data["songs"]["next_next"]["comment"] = \
+                commentToStyle(music_data["songs"]["next_next"]["comment"])
 
-            page_data["next_next_header"] = "Followed by:<br/>"  # pyright: ignore[reportUnusedVariable]
+            page_data["next_next_header"] = "Followed by:<br/>"
 
         if music_data["songs"]["current"]["title"] == LAST_CALL_TITLE:
-            music_data["songs"]["next"]["title"] = "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
+            music_data["songs"]["next"]["title"] = \
+                "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
         elif music_data["songs"]["current"]["title"] == LAST_DANCE_TITLE:
-            music_data["songs"]["next"]["title"] = "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
+            music_data["songs"]["next"]["title"] = \
+                "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
 
         current_playlist_name: str = music_data["current_playlist_name"]
         if (
             not music_data["songs"]["current"]["title"] or
             current_playlist_name not in DISPLAY_SONGS_FOR_PLAYLISTS
         ):
-            music_data["songs"]["next_next"]["title"] = music_data["songs"]["next"]["title"]
+            music_data["songs"]["next_next"]["title"] = \
+                music_data["songs"]["next"]["title"]
             if not music_data["songs"]["next_next"]["title"]:
                 music_data["songs"]["next_next"]["title"] = ""
             else:
-                music_data["songs"]["next_next"]["title"] = "Next: " + music_data["songs"]["next_next"]["title"]
-            music_data["songs"]["next"]["title"] = music_data["songs"]["current"]["title"]
+                music_data["songs"]["next_next"]["title"] = \
+                    "Next: " + music_data["songs"]["next_next"]["title"]
+            music_data["songs"]["next"]["title"] = \
+                music_data["songs"]["current"]["title"]
             if music_data["songs"]["next"]["title"]:
                 music_data["songs"]["next"]["title"] = (
-                    "<br/><br/><br/><br/><br/><br/><br/>" +
-                    f'Currently Playing:{music_data["songs"]["next"]["title"]}<br/>{music_data["songs"]["next_next"]["title"]}'
+                    "<br/><br/><br/><br/><br/><br/><br/>Currently Playing:" +
+                    f'{music_data["songs"]["next"]["title"]}<br/>' +
+                    f'{music_data["songs"]["next_next"]["title"]}'
                 )
             else:
                 music_data["songs"]["next"]["title"] = ""
@@ -578,20 +593,29 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-            page_data["current_dance_style_header"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_dance_style_header"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_divider"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_header"] = ""  # pyright: ignore[reportUnusedVariable]
-            page_data["next_next_header"] = ""  # pyright: ignore[reportUnusedVariable]
+            page_data["current_dance_style_header"] = ""
+            page_data["next_dance_style_header"] = ""
+            page_data["next_divider"] = ""
+            page_data["next_header"] = ""
+            page_data["next_next_header"] = ""
         else:
-            music_data["songs"]["current"]["title"] = f'<div class="title">{music_data["songs"]["current"]["title"]}</div>'
+            music_data["songs"]["current"]["title"] = \
+                f'<div class="title">{music_data["songs"]["current"]["title"]}</div>'
 
         if music_data["songs"]["current"]["artist"]:
-            music_data["songs"]["current"]["artist"] = f'by {music_data["songs"]["current"]["artist"]}'
+            music_data["songs"]["current"]["artist"] = \
+                f'by {music_data["songs"]["current"]["artist"]}'
 
-        page_data["real_time"] = datetime_datetime.now().strftime("%-I:%M:%S %p")  # pyright: ignore[reportUnusedVariable]
+        page_data["real_time"] = \
+            datetime_datetime.now().strftime("%-I:%M:%S %p")
 
-        with open(pathlib_Path(MY_DIR_FULLPATH + "/hud.html.j2"), "rt", encoding="utf8") as f:
+        with (
+            open(
+                file=pathlib_Path(MY_DIR_FULLPATH + "/hud.html.j2"),
+                mode="rt",
+                encoding="utf8",
+            )
+        ) as f:
             raw_message = f.read()
 
         message = raw_message.format_map({**globals(), **locals()})
@@ -623,9 +647,12 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         every message.
 
         """
-        formatted_args = format%args
+        formatted_args = format % args
 
-        message = f"{self.address_string()} - - [{self.log_date_time_string()}] {formatted_args}"
+        message = (
+            f"{self.address_string()} - - " +
+            f"[{self.log_date_time_string()}] {formatted_args}"
+        )
 
         logger.info(message)
 
