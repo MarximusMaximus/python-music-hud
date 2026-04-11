@@ -1,11 +1,13 @@
 #!/usr/bin/env sh
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 # disable shellcheck checking for unreachable code, b/c it doesn't understand
 # mshext's def and call keywords
 # "$_" undefined in POSIX, we only use it for specific shells
 # shellcheck disable=SC3028
 DOLLAR_UNDER="$_"
 
+# variable is used indirectly
+# shellcheck disable=SC2034
 TEMP_SHELL_SOURCE="./bootstrap.sh"
 
 if [ "${DO_SET_X_BOOTSTRAP}" = true ]; then

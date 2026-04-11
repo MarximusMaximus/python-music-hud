@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 # disable shellcheck checking for unreachable code, b/c it doesn't understand
 # mshext's def and call keywords
 # "$_" undefined in POSIX, we only use it for specific shells
@@ -9,6 +9,8 @@ DOLLAR_UNDER="$_"
 BASH_XTRACEFD=$BASH_XTRACEFD
 export BASH_XTRACEFD
 
+# variable is used indirectly
+# shellcheck disable=SC2034
 TEMP_SHELL_SOURCE="./run.sh"
 
 if [ "${DO_SET_X_RUN}" = true ]; then
@@ -1533,7 +1535,7 @@ if [ "${__array__SHELL_SOURCE__length}" -eq 0 ]; then
     # nullcall log_ultradebug "\${(%):-%N}=${(%):-%N}"
     # nullcall log_ultradebug "\${.sh.file}=${.sh.file}"
     nullcall log_ultradebug "\$SOURCED=$SOURCED"
-    # shellcheck disable=SC2128
+    # shellcheck disable=SC2128,SC3028
     nullcall log_ultradebug "\${BASH_SOURCE}=${BASH_SOURCE}"
     nullcall log_ultradebug "\${ZSH_EVAL_CONTEXT}=${ZSH_EVAL_CONTEXT}"
     TEMP_ARG_ZERO="$0"
@@ -1549,7 +1551,7 @@ if [ "${__array__SHELL_SOURCE__length}" -eq 0 ]; then
     nullcall log_ultradebug "\n%s" "$(echo "$(lsof -p $$ -Fn0)" )"
     nullcall log_ultradebug ""
 
-    # shellcheck disable=SC2128
+    # shellcheck disable=SC2128,SC3028
     if [ "${ZSH_EVAL_CONTEXT}" != "" ]; then
         if [ "${ZSH_EVAL_CONTEXT}" = "toplevel" ]; then
             nullcall log_ultradebug "zsh invoked"
@@ -1572,6 +1574,7 @@ if [ "${__array__SHELL_SOURCE__length}" -eq 0 ]; then
             TEMP_FILE_NAME="UNKNOWN"
         fi
     elif [ "${BASH_SOURCE}" != "" ]; then
+        # shellcheck disable=SC3028
         if [ "${BASH_SOURCE}" = "$0" ]; then
             nullcall log_ultradebug "bash invoked"
             TEMP_WAS_SOURCED=false
@@ -1580,6 +1583,7 @@ if [ "${__array__SHELL_SOURCE__length}" -eq 0 ]; then
             TEMP_WAS_SOURCED=true
         fi
 
+        # shellcheck disable=SC3028
         TEMP_FILE_NAME="${BASH_SOURCE}"
     else
         if [ "$(rreadlink "${DOLLAR_UNDER}")" = "$(rreadlink "$0")" ]; then
