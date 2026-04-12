@@ -6,6 +6,8 @@ by Marximus Maximus (<https://marximus.com>)
 
 A TV HUD to display song information for an dance event.
 
+[![ci](https://github.com/MarximusMaximus/python-music-hud/actions/workflows/ci.yml/badge.svg)](https://github.com/MarximusMaximus/python-music-hud/actions/workflows/ci.yml) [![CodeQL](https://github.com/MarximusMaximus/python-music-hud/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/MarximusMaximus/python-music-hud/actions/workflows/codeql-analysis.yml)
+
 ## Features
 
 - Event title card.
