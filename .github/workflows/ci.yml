@@ -135,9 +135,11 @@ jobs:
           # - os: ubuntu-latest-x64
           #   os-image: ubuntu-latest
           #   windows-wsl: not_windows
+          #   shell: "sh {0}"
           - os: macos-latest
             os-image: macos-latest
             windows-wsl: not_windows
+            shell: "sh {0}"
           # - os: windows_debian-latest-x64
           #   os-image: windows-latest
           #   windows-wsl: Debian
