@@ -72,9 +72,6 @@ jobs:
           echo OS: ${{ runner.os }}
           echo ARCH: ${{ runner.arch }}
           echo matrix:
-          echo   .os: ${{ matrix.os }}
-          echo   .tox-env: ${{ matrix.tox-env }}
-          echo   .windows-wsl: ${{ matrix.windows-wsl }}
           echo which git:
           which git
           echo git version:
