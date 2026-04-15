@@ -1,15 +1,44 @@
-[tool.poetry]
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
 name = "python-music-hud-tv"
 # WARNING: Don't forget to update the version number in src/bfi/template/bfi-base.sh
 version = "0.1.0.dev0"
+# poetry, pyOpenSSL, PySocks are installed and required by the conda env,
+# including them here as ">1" will prevent poetry from uninstalling them or
+# their dependencies
+# similarly, we need to specify a valid version of python
+dependencies = [
+    # "python>=3.14",
+    "poetry>=2.3.3",  # conda controls poetry version
+    "pyOpenSSL>1",  # conda control pyOpenSSL version
+    "PySocks>1",  # conda control PySocks version
+    "pip>1",  # prevents poetry from removing it
+    "packaging>1", # prevents poetry from removing it
+    "setuptools>1",  # prevents poetry from removing it
+    "pyobjc>=12.1",
+    "pyobjc-framework-ScriptingBridge>1",
+]
+requires-python = ">=3.14,<4.0"
+authors = [
+    {name = "Marximus Maximus", email = "marximus@marximus.com"},
+]
+maintainers = [
+    {name = "Marximus Maximus", email = "marximus@marximus.com"},
+]
 description = "TODO"
-authors = ["Marximus Maximus <marximus@marximus.com>"]
-license = "MIT"
-maintainers = ["Marximus Maximus <marximus@marximus.com>"]
 readme = "README.md"
-homepage = "https://github.com/MarximusMaximus/python-music-hud-tv"
-repository = "https://github.com/MarximusMaximus/python-music-hud-tv"
-documentation = "https://github.com/MarximusMaximus/python-music-hud-tv"
+license = "MIT"
+# cspell: disable-next-line
+license-files = [
+    # cspell: disable-next-line
+    "LICEN[CS]E",
+    # cspell: disable-next-line
+    # "LICEN[CS]E.*"
+]
+keywords = [""]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,6 +48,16 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "License :: OSI Approved :: MIT License",
 ]
+
+
+[project.urls]
+homepage = "https://github.com/MarximusMaximus/python-music-hud-tv"
+documentation = "https://github.com/MarximusMaximus/python-music-hud-tv"
+repository = "https://github.com/MarximusMaximus/python-music-hud-tv"
+issues = "https://github.com/MarximusMaximus/python-music-hud-tv/issues"
+changelog = "https://github.com/MarximusMaximus/python-music-hud-tv//blob/master/CHANGELOG.rst"
+
+[tool.poetry]
 packages = [
     { include = "python_music_hud_tv", from="src" },
     # { include = "tests", format="sdist"},
@@ -35,25 +74,20 @@ include = [
 #     "src/pytest_shell_script_test_harness/resources",
 ]
 
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/MarximusMaximus/python-music-hud-tv/issues"
-"Source" = "https://github.com/MarximusMaximus/python-music-hud-tv"
-"Documentation" = "https://github.com/MarximusMaximus/python-music-hud-tv"
-
-# poetry, pyOpenSSL, PySocks are installed and required by the conda env,
-# including them here as ">1" will prevent poetry from uninstalling them or
-# their dependencies
-# similarly, we need to specify a valid version of python
-[tool.poetry.dependencies]
-poetry = ">=2.3.3"  # conda controls poetry version
-pyOpenSSL = ">1"  # conda control pyOpenSSL version
-PySocks = ">1"  # conda control PySocks version
-pip = ">1"  # prevents poetry from removing it
-setuptools = ">1"  # prevents poetry from removing it
-python = ">=3.14,<3.15"
-packaging = ">1"
-pyobjc = "^12.1"
-pyobjc-framework-ScriptingBridge = ">1"
+# # poetry, pyOpenSSL, PySocks are installed and required by the conda env,
+# # including them here as ">1" will prevent poetry from uninstalling them or
+# # their dependencies
+# # similarly, we need to specify a valid version of python
+# [tool.poetry.dependencies]
+# poetry = ">=2.3.3"  # conda controls poetry version
+# pyOpenSSL = ">1"  # conda control pyOpenSSL version
+# PySocks = ">1"  # conda control PySocks version
+# pip = ">1"  # prevents poetry from removing it
+# setuptools = ">1"  # prevents poetry from removing it
+# python = ">=3.14,<3.15"
+# packaging = ">1"
+# pyobjc = "^12.1"
+# pyobjc-framework-ScriptingBridge = ">1"
 
 [tool.poetry.scripts]
 bfi = "python_music_hud_tv.__main__:scriptEntryPoint"
@@ -89,10 +123,6 @@ pytest-xdist = "^3.8.0"
 pytest-subprocess = "^1.5.4"
 esbonio = "^2.0.0"
 poetry-plugin-export = "^1.10.0"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 
 [tool.mypy]
