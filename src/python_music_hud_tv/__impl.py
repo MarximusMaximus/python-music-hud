@@ -132,8 +132,8 @@ FileDescriptorOrPath = int | StrOrBytesPath
 ################################################################################
 #region Constants
 
-STATE_PLAYING = 1800426320
-STATE_STOPPED = 1800426352
+APPLE_MUSIC_STATE_PLAYING = 1800426320
+APPLE_MUSIC_STATE_STOPPED = 1800426352
 
 # SERVER_PORT = 8080
 
@@ -262,7 +262,7 @@ def appleMusicGetPlaylistName() -> str:
     if (
         app_apple_music is not None and
         app_apple_music.isRunning() and
-        app_apple_music.playerState() == STATE_PLAYING
+        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
         app_apple_music_playlist = app_apple_music.currentPlaylist()
         if app_apple_music_playlist:
@@ -278,7 +278,7 @@ def appleMusicGetCurrentPlayHeadTimeInSeconds() -> int:
     if (
         app_apple_music is not None and
         app_apple_music.isRunning() and
-        app_apple_music.playerState() == STATE_PLAYING
+        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
         raw_time = app_apple_music.playerPosition()
 
@@ -299,7 +299,7 @@ def appleMusicGetCurrentTrack() -> Track:
     if (
         app_apple_music is not None and
         app_apple_music.isRunning() and
-        app_apple_music.playerState() == STATE_PLAYING
+        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
         app_apple_music_track = app_apple_music.currentTrack()
 
@@ -314,7 +314,7 @@ def appleMusicGetNextTrack(offset: int = 1) -> Track:
     if (
         app_apple_music is not None and
         app_apple_music.isRunning() and
-        app_apple_music.playerState() == STATE_PLAYING
+        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
         app_apple_music_playlist = app_apple_music.currentPlaylist()
         if app_apple_music_playlist:
@@ -389,7 +389,7 @@ def getMusicData() -> MusicData:
     if (
         g_app_apple_music is not None and
         g_app_apple_music.isRunning() and
-        g_app_apple_music.playerState() == STATE_PLAYING
+        g_app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
         logger.debug("getting info from Apple Music App")
         music_data["songs"]["current"] = appleMusicGetCurrentTrack()
