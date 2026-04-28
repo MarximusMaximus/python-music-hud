@@ -119,6 +119,10 @@ remove-bfi: ## remove the bfi environment
 uninstall: sterilize remove-bfi
 
 .PHONY:
+listtest: ### lists tests discovered
+	./run.sh pytest --collect-only --color=yes
+
+.PHONY:
 quicktest: ### run tests for latest python version
 	./run.sh tox -e py$(CURRENT_PYTHON_VERSION) -- --verbose
 

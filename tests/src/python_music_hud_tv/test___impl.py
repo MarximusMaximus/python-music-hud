@@ -42,6 +42,8 @@ def test___main(testdir: PytestFixture) -> None:
 
     testdir = testdir  # ignore unused arg in sig  ## pylint: disable=self-assigning-variable ## noqa: E501
 
+    print("asdf")
+
     assert True
 
 
