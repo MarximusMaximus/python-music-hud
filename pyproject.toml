@@ -85,7 +85,7 @@ include = [
 # pip = ">1"  # prevents poetry from removing it
 # setuptools = ">1"  # prevents poetry from removing it
 # python = ">=3.14,<3.15"
-# packaging = ">1"
+# packaging = ">=26.2"
 # pyobjc = "^12.1"
 # pyobjc-framework-ScriptingBridge = ">1"
 
@@ -117,7 +117,7 @@ vulture = "^2.16"
 pylint = "^4.0.5"
 # pytest-prefer-nested-dup-tests = "^0.1.0"
 pyright = "^1.1.409"
-packaging = ">1"
+packaging = ">=26.2"
 pytest = "^9.0.3"
 pytest-xdist = "^3.8.0"
 pytest-subprocess = "^1.5.4"
