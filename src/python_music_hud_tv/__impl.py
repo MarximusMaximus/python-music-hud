@@ -29,12 +29,21 @@ logger_log = logger.log
 #===============================================================================
 #region stdlib
 
+from copy import (
+    deepcopy                        as copy_deepcopy,
+)
 from datetime import (
     datetime                        as datetime_datetime,
 )
 from http.server import (
     HTTPServer                      as http_server_HTTPServer,
     BaseHTTPRequestHandler          as http_server_BaseHTTPRequestHandler,
+)
+from json import (
+    loads                           as json_loads,
+)
+from os import (
+    PathLike                        as os_PathLike,
 )
 from pathlib import (
     Path                            as pathlib_Path,
@@ -67,6 +76,17 @@ from ScriptingBridge import SBApplication  # type: ignore[reportGeneralTypesIssu
 
 ################################################################################
 #region Types
+
+class MusicHudConfig(TypedDict):
+    server_port: int
+    event_title_html: str
+    background_color: str
+    foreground_color: str
+    secret_titles: list[str]
+    display_songs_for_playlists: list[str]
+    gap_silence_title: str
+    last_call_title: str
+    last_dance_title: str
 
 class Track(TypedDict):
     title: str
@@ -102,6 +122,10 @@ AppleMusicTrack = Any
 # pylint: disable=invalid-name
 html = str
 
+# referenced loosely from ~/.vscode/extensions/ms-python.vscode-pylance-2026.2.1/dist/typeshed-fallback/stdlib/builtins.pyi
+StrOrBytesPath = str | bytes | os_PathLike[str] | os_PathLike[bytes]  # stable
+FileDescriptorOrPath = int | StrOrBytesPath
+
 #endregion Types
 ################################################################################
 
@@ -111,34 +135,59 @@ html = str
 STATE_PLAYING = 1800426320
 STATE_STOPPED = 1800426352
 
-SERVER_PORT = 8080
+# SERVER_PORT = 8080
 
-BACKGROUND_COLOR = "#6E6856"
-FOREGROUND_COLOR = "29,27,22"
-EVENT_TITLE_HTML = "Mark<br/>&<br/>Sherry<br/>Wedding"
+# BACKGROUND_COLOR = "#6E6856"
+# FOREGROUND_COLOR = "#1d1b16"
+# EVENT_TITLE_HTML = "Mark<br/>&<br/>Sherry<br/>Wedding"
 
-SECRET_TITLES = [
-    "Sherry",
-    "Never Gonna Give You Up (7\" Mix)",
-]
+# SECRET_TITLES = [
+#     "Sherry",
+#     "Never Gonna Give You Up (7\" Mix)",
+# ]
 
-DISPLAY_SONGS_FOR_PLAYLISTS = [
-    "SPOTIFY",
-    "9 Pre Dance - 30m (6:30p)",
-    "10 Main Dance - 1h (8p)",
-    "11 Extra Dance - 1h (?)",
-    "12 Last Call - 30m (9p)",
-    "13 GTFO - 30m (9:30p)",
-    "14 Cleanup - 2h (10:15p)",
-    "5a Dance (8:10p, <3h)",
-    "5b Last Dances (10:45pm)",
-]
+# DISPLAY_SONGS_FOR_PLAYLISTS = [
+#     "SPOTIFY",
+#     "9 Pre Dance - 30m (6:30p)",
+#     "10 Main Dance - 1h (8p)",
+#     "11 Extra Dance - 1h (?)",
+#     "12 Last Call - 30m (9p)",
+#     "13 GTFO - 30m (9:30p)",
+#     "14 Cleanup - 2h (10:15p)",
+#     "5a Dance (8:10p, <3h)",
+#     "5b Last Dances (10:45pm)",
+# ]
 
-GAP_SILENCE_TITLE = "----- 30 Minutes of Silence -----"
+# GAP_SILENCE_TITLE = "----- 30 Minutes of Silence -----"
 
-LAST_CALL_TITLE = "Last Call (One Bourbon, One Scotch, One Beer)"
+# LAST_CALL_TITLE = "Last Call (One Bourbon, One Scotch, One Beer)"
 
-LAST_DANCE_TITLE = "(I've Had) The Time of My Life"
+# LAST_DANCE_TITLE = "(I've Had) The Time of My Life"
+
+DEFAULT_CONFIG = MusicHudConfig(
+    server_port=8080,
+    event_title_html="Mark<br/>&<br/>Sherry<br/>Wedding",
+    background_color="#6E6856",
+    foreground_color="#1d1b16",
+    secret_titles=[
+        "Sherry",
+        "Never Gonna Give You Up (7\" Mix)",
+    ],
+    display_songs_for_playlists=[
+        "SPOTIFY",
+        "9 Pre Dance - 30m (6:30p)",
+        "10 Main Dance - 1h (8p)",
+        "11 Extra Dance - 1h (?)",
+        "12 Last Call - 30m (9p)",
+        "13 GTFO - 30m (9:30p)",
+        "14 Cleanup - 2h (10:15p)",
+        "5a Dance (8:10p, <3h)",
+        "5b Last Dances (10:45pm)",
+    ],
+    gap_silence_title="----- 30 Minutes of Silence -----",
+    last_call_title="Last Call (One Bourbon, One Scotch, One Beer)",
+    last_dance_title="(I've Had) The Time of My Life",
+)
 
 #endregion Constants
 ################################################################################
@@ -154,6 +203,24 @@ g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.app
 
 ################################################################################
 #region Public Functions
+
+def loadMusicHudConfig(
+    path: FileDescriptorOrPath | pathlib_Path
+) -> MusicHudConfig:
+    config: MusicHudConfig
+
+    str_path: str = str(path)
+
+    try:
+        with open(file=str_path, mode="rb", encoding="utf8") as f:
+            f_data = f.read()
+            config = json_loads(f_data, object_hook_pairs=MusicHudConfig)
+    except Exception as e:
+        logger.error(e)
+        logger.info("Failed to load config, using default config.")
+        config = copy_deepcopy(DEFAULT_CONFIG)
+
+    return config
 
 def durationInSecondsToPretty(duration_in_seconds: int) -> str:
     minutes = int(duration_in_seconds / 60)
@@ -373,23 +440,26 @@ def commentToStyle(comment: str | None) -> str:
 #region Public Classes
 
 #===============================================================================
-class Server():
+class MusicHudServer():
     """
     TODO
     """
 
+    config: MusicHudConfig
     keep_running = True
     thread: threading_Thread | None = None
     test_case: Any = None
 
-    # #-------------------------------------------------------------------------
-    # def __init__(self):
-    #     pass
+    #-------------------------------------------------------------------------
+    def __init__(self,  *args: Any, config: MusicHudConfig | None=None, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        if config is None:
+            config = copy_deepcopy(DEFAULT_CONFIG)
+        self.config = config
 
     #---------------------------------------------------------------------------
     def runServer(
         self,
-        handler_cls: Type[http_server_BaseHTTPRequestHandler],
     ) -> None:
         """
         TODO
@@ -400,7 +470,7 @@ class Server():
         self.thread = threading_Thread(
             target=self.serverThread,
             args=[
-                handler_cls,
+                MusicHudHTTPRequestHandler,
             ],
         )
         self.thread.start()
@@ -413,7 +483,11 @@ class Server():
 
         logger.debug("starting server")
 
-        server = http_server_HTTPServer(("localhost", SERVER_PORT), handler_cls)
+        server = MusicHudHTTPServer(
+            server_address=("localhost", self.config["server_port"]),
+            RequestHandlerClass=handler_cls,
+            config=self.config,
+        )
 
         while self.keep_running:
             server.handle_request()
@@ -432,8 +506,19 @@ class Server():
             self.thread.join()
 
 #===============================================================================
+class MusicHudHTTPServer(http_server_HTTPServer):
+    config: MusicHudConfig | None = None
+
+    #-------------------------------------------------------------------------
+    def __init__(self,  *args: Any, config: MusicHudConfig | None=None, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        if config is None:
+            config = copy_deepcopy(DEFAULT_CONFIG)
+        self.config = config
+
+#===============================================================================
 # noinspection PyClassHasNoInit
-class GenericHandler(http_server_BaseHTTPRequestHandler):
+class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
     """
     TODO
     """
@@ -444,6 +529,10 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
         TODO
         """
         # pylint: disable=possibly-unused-variable
+
+        config: MusicHudConfig = self.server.__dict__.get(  # pyright: ignore[reportUnusedVariable]
+            "config", copy_deepcopy(DEFAULT_CONFIG)
+        )
 
         parsed_path = urllib_parse_urlparse(self.path)
         real_path = parsed_path.path
@@ -463,10 +552,10 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             "real_time": "",
         }
 
-        if music_data["songs"]["next_next"]["title"] in SECRET_TITLES:
+        if music_data["songs"]["next_next"]["title"] in config["secret_titles"]:
             music_data["songs"]["next_next"]["title"] = "*****"
         elif (
-            GAP_SILENCE_TITLE in (
+            config["gap_silence_title"] in (
                 music_data["songs"]["next_next"]["title"],
                 music_data["songs"]["next"]["title"],
                 music_data["songs"]["current"]["title"],
@@ -476,11 +565,11 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["duration_pretty"] = ""
             music_data["songs"]["next_next"]["comment"] = ""
 
-        if music_data["songs"]["next"]["title"] in SECRET_TITLES:
+        if music_data["songs"]["next"]["title"] in config["secret_titles"]:
             music_data["songs"]["next"]["title"] = "*****"
             music_data["songs"]["next"]["artist"] = "*****"
         elif (
-            GAP_SILENCE_TITLE in (
+            config["gap_silence_title"] in (
                 music_data["songs"]["next"]["title"],
                 music_data["songs"]["current"]["title"],
             )
@@ -490,15 +579,18 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next"]["duration_pretty"] = ""
             music_data["songs"]["next"]["comment"] = ""
 
-        if music_data["songs"]["current"]["title"] == GAP_SILENCE_TITLE:
+        if (
+            music_data["songs"]["current"]["title"] ==
+            config["gap_silence_title"]
+        ):
             music_data["songs"]["current"]["title"] = ""
             music_data["songs"]["current"]["artist"] = ""
             music_data["songs"]["current"]["comment"] = ""
 
         if (
             music_data["songs"]["current"]["title"] in (
-                LAST_CALL_TITLE,
-                LAST_DANCE_TITLE,
+                config["last_call_title"],
+                config["last_dance_title"],
             )
         ):
             music_data["songs"]["next"]["title"] = ""
@@ -531,7 +623,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             page_data["next_header"] = "Next Up:"
             page_data["next_dance_style_header"] = "Dance Style Info:"
 
-            if music_data["songs"]["next"]["title"] == LAST_DANCE_TITLE:
+            if music_data["songs"]["next"]["title"] == config["last_dance_title"]:
                 page_data["next_header"] = "LAST DANCE:"
 
             if music_data["songs"]["next"]["artist"]:
@@ -545,17 +637,17 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
 
             page_data["next_next_header"] = "Followed by:<br/>"
 
-        if music_data["songs"]["current"]["title"] == LAST_CALL_TITLE:
+        if music_data["songs"]["current"]["title"] == config["last_call_title"]:
             music_data["songs"]["next"]["title"] = \
                 "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
-        elif music_data["songs"]["current"]["title"] == LAST_DANCE_TITLE:
+        elif music_data["songs"]["current"]["title"] == config["last_dance_title"]:
             music_data["songs"]["next"]["title"] = \
                 "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
 
         current_playlist_name: str = music_data["current_playlist_name"]
         if (
             not music_data["songs"]["current"]["title"] or
-            current_playlist_name not in DISPLAY_SONGS_FOR_PLAYLISTS
+            current_playlist_name not in config["display_songs_for_playlists"]
         ):
             music_data["songs"]["next_next"]["title"] = \
                 music_data["songs"]["next"]["title"]
@@ -577,7 +669,7 @@ class GenericHandler(http_server_BaseHTTPRequestHandler):
             music_data["songs"]["next_next"]["title"] = ""
 
             music_data["songs"]["current"]["title"] = (
-                f'<div class="bigTitle"><br/>{EVENT_TITLE_HTML}</div>'
+                f'<div class="bigTitle"><br/>{config["event_title_html"]}</div>'
             )
 
             music_data["songs"]["current"]["artist"] = ""

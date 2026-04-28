@@ -35,8 +35,7 @@ del os_path
 #region ours (internal)
 
 from python_music_hud_tv import (
-    Server                          as python_music_hud_tv_Server,
-    GenericHandler                  as python_music_hud_tv_GenericHandler,
+    MusicHudServer                  as python_music_hud_tv_MusicHudServer,
 )
 
 #endregion ours (internal)
@@ -64,8 +63,8 @@ def __main(argv: list[str]) -> int:
     )
     logging_basicConfig(level=1)
 
-    server = python_music_hud_tv_Server()
-    server.runServer(python_music_hud_tv_GenericHandler)
+    server = python_music_hud_tv_MusicHudServer()
+    server.runServer()
 
     return 0
 

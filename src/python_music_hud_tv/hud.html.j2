@@ -5,10 +5,15 @@
 <!--<meta http-equiv="refresh" content="1" />-->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
+    :root {{
+        --BG_COLOR: {config[background_color]};
+        --FG_COLOR: {config[foreground_color]}
+    }}
+
     body {{
         font-family: Big Caslon, -system, -system-font, Arial;
-        background-color: {BACKGROUND_COLOR};
-        color: rgba({FOREGROUND_COLOR}, 1);
+        background-color: var(--BG_COLOR);
+        color: var(--FG_COLOR);
         overflow: hidden;
     }}
 
@@ -63,23 +68,23 @@
     }}
     .currentArtist {{
         font-size: 2vw;
-        color: rgba({FOREGROUND_COLOR}, 0.8);
+        color: color-mix(in srgb, var(--FG_COLOR) 80%, transparent);
     }}
     .currentStyleHeader {{
         font-size: 2vw;
-        color: rgba({FOREGROUND_COLOR}, 0.8);
+        color: color-mix(in srgb, var(--FG_COLOR) 80%, transparent);
     }}
     .currentStyle {{
         font-size: 4.2vw;
     }}
 
     table.nextTable {{
-        color: rgba({FOREGROUND_COLOR}, 0.7);
+        color: color-mix(in srgb, var(--FG_COLOR) 70%, transparent);
     }}
 
     table.nextNextTable {{
         font-size: 1.5vw;
-        color: rgba({FOREGROUND_COLOR}, 0.7);
+        color: color-mix(in srgb, var(--FG_COLOR) 70%, transparent);
     }}
 
     .headerNext {{
@@ -103,7 +108,7 @@
         bottom: 1%;
         right: 1%;
         font-size: 4vw;
-        color: rgba({FOREGROUND_COLOR}, 0.4);
+        color: color-mix(in srgb, var(--FG_COLOR) 40%, transparent);
     }}
 
     div.bigTitle {{
