@@ -21,7 +21,7 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: refactor the constants into settings
+# TODO: Make all data in page updating asynchronous.
 
 ################################################################################
 #region Imports
@@ -56,7 +56,7 @@ from urllib.parse import (
 )
 from typing import (
     Any,
-    Type,
+    # Type,
     TypedDict,
 )
 
@@ -122,7 +122,7 @@ AppleMusicTrack = Any
 # pylint: disable=invalid-name
 html = str
 
-# referenced loosely from ~/.vscode/extensions/ms-python.vscode-pylance-2026.2.1/dist/typeshed-fallback/stdlib/builtins.pyi
+# referenced loosely from ~/.vscode/extensions/ms-python.vscode-pylance-2026.2.1/dist/typeshed-fallback/stdlib/builtins.pyi  # pylint: disable=line-too-long  # noqa: E501,B950,W505
 StrOrBytesPath = str | bytes | os_PathLike[str] | os_PathLike[bytes]  # stable
 FileDescriptorOrPath = int | StrOrBytesPath
 
@@ -134,35 +134,6 @@ FileDescriptorOrPath = int | StrOrBytesPath
 
 APPLE_MUSIC_STATE_PLAYING = 1800426320
 APPLE_MUSIC_STATE_STOPPED = 1800426352
-
-# SERVER_PORT = 8080
-
-# BACKGROUND_COLOR = "#6E6856"
-# FOREGROUND_COLOR = "#1d1b16"
-# EVENT_TITLE_HTML = "Mark<br/>&<br/>Sherry<br/>Wedding"
-
-# SECRET_TITLES = [
-#     "Sherry",
-#     "Never Gonna Give You Up (7\" Mix)",
-# ]
-
-# DISPLAY_SONGS_FOR_PLAYLISTS = [
-#     "SPOTIFY",
-#     "9 Pre Dance - 30m (6:30p)",
-#     "10 Main Dance - 1h (8p)",
-#     "11 Extra Dance - 1h (?)",
-#     "12 Last Call - 30m (9p)",
-#     "13 GTFO - 30m (9:30p)",
-#     "14 Cleanup - 2h (10:15p)",
-#     "5a Dance (8:10p, <3h)",
-#     "5b Last Dances (10:45pm)",
-# ]
-
-# GAP_SILENCE_TITLE = "----- 30 Minutes of Silence -----"
-
-# LAST_CALL_TITLE = "Last Call (One Bourbon, One Scotch, One Beer)"
-
-# LAST_DANCE_TITLE = "(I've Had) The Time of My Life"
 
 DEFAULT_CONFIG = MusicHudConfig(
     server_port=8080,
@@ -205,7 +176,7 @@ g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.app
 #region Public Functions
 
 def loadMusicHudConfig(
-    path: FileDescriptorOrPath | pathlib_Path
+    path: FileDescriptorOrPath | pathlib_Path,
 ) -> MusicHudConfig:
     config: MusicHudConfig
 
@@ -215,7 +186,7 @@ def loadMusicHudConfig(
         with open(file=str_path, mode="rb", encoding="utf8") as f:
             f_data = f.read()
             config = json_loads(f_data, object_hook_pairs=MusicHudConfig)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error(e)
         logger.info("Failed to load config, using default config.")
         config = copy_deepcopy(DEFAULT_CONFIG)
@@ -442,7 +413,8 @@ def commentToStyle(comment: str | None) -> str:
 #===============================================================================
 class MusicHudServer():
     """
-    TODO
+    MusicHudServer handles managing communication between Music Player and
+    HTTP requests.
     """
 
     config: MusicHudConfig
@@ -451,7 +423,17 @@ class MusicHudServer():
     test_case: Any = None
 
     #-------------------------------------------------------------------------
-    def __init__(self,  *args: Any, config: MusicHudConfig | None=None, **kwargs: Any):
+    def __init__(
+        self,
+        *args: Any,
+        config: MusicHudConfig | None = None,
+        **kwargs: Any,
+    ):
+        """
+        Args:
+            config (MusicHudConfig | None, optional): Configuration settings object.
+                Defaults to None.
+        """
         super().__init__(*args, **kwargs)
         if config is None:
             config = copy_deepcopy(DEFAULT_CONFIG)
@@ -462,7 +444,7 @@ class MusicHudServer():
         self,
     ) -> None:
         """
-        TODO
+        Run the server in a separate thread.
         """
 
         logger.debug("setting up server")
@@ -478,8 +460,8 @@ class MusicHudServer():
     #---------------------------------------------------------------------------
     def serverThread(self, handler_cls: Any) -> None:
         """
-        TODO
-        """
+        Function that is the server's thread's run loop.
+        """  # noqa: D401
 
         logger.debug("starting server")
 
@@ -498,7 +480,7 @@ class MusicHudServer():
     #---------------------------------------------------------------------------
     def stopServer(self) -> None:
         """
-        TODO
+        Stop the server by flagging the run loop and waiting for thread to join.
         """
 
         self.keep_running = False
@@ -507,10 +489,26 @@ class MusicHudServer():
 
 #===============================================================================
 class MusicHudHTTPServer(http_server_HTTPServer):
+    """
+    HTTP Server that responds to http requests.
+    """
+
     config: MusicHudConfig | None = None
 
     #-------------------------------------------------------------------------
-    def __init__(self,  *args: Any, config: MusicHudConfig | None=None, **kwargs: Any):
+    def __init__(
+        self,
+        *args: Any,
+        config: MusicHudConfig | None = None,
+        **kwargs: Any,
+    ):
+        """
+        HTTP Server that responds to http requests.
+
+        Args:
+            config (MusicHudConfig | None, optional): Configuration settings object.
+            Defaults to None.
+        """
         super().__init__(*args, **kwargs)
         if config is None:
             config = copy_deepcopy(DEFAULT_CONFIG)
@@ -530,8 +528,8 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         """
         # pylint: disable=possibly-unused-variable
 
-        config: MusicHudConfig = self.server.__dict__.get(  # pyright: ignore[reportUnusedVariable]
-            "config", copy_deepcopy(DEFAULT_CONFIG)
+        config: MusicHudConfig = self.server.__dict__.get(  # pyright: ignore[reportUnusedVariable]  # pylint: disable=line-too-long  # noqa: E501,B950
+            "config", copy_deepcopy(DEFAULT_CONFIG),
         )
 
         parsed_path = urllib_parse_urlparse(self.path)
