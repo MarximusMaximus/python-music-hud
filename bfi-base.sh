@@ -6,8 +6,8 @@
 # shellcheck disable=SC3028
 DOLLAR_UNDER="$_"
 
-# WARNING: Don't forget to update the version number in pyproject.toml
-BFI_VERSION="0.1.2.dev0"
+# WARNING: Don't forget to update the version number in **BSI's** pyproject.toml
+BFI_VERSION="0.1.2.dev1"
 export BFI_VERSION
 
 # TODO: flag for not tracing marximus-shell-extensions extended preamble functions

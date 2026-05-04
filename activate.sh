@@ -2683,7 +2683,7 @@ unset __MARXIMUS_SHELL_EXTENSIONS_BASE_PREAMBLE__OPTIONS_OLD
 
 def; __bfi_activate_environment() {
     if [ "$(call array_get_last WAS_SOURCED)" = false ]; then
-        >&2 command printf "FATAL: $(get_my_real_basename) should not be invoked, only sourced\n"
+        >&2 command printf "FATAL: $(get_my_real_basename) should not be invoked, only sourced, type:\nsource $0\n"
         return 151 # "${RET_ERROR_SCRIPT_WAS_NOT_SOURCED}"
     fi
 
