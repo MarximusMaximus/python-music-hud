@@ -151,7 +151,6 @@ no_implicit_reexport=false
 warn_unused_ignores=false
 ## strict enables ^^^^^
 local_partial_types=true
-show_none_errors=true
 strict_optional=true
 warn_unreachable=true
 
@@ -172,52 +171,52 @@ module="jinja2.*"
 ignore_missing_imports=true
 
 [tool.pyright]
-pythonVersion="3.10"
+pythonVersion="3.14"
 typeCheckingMode="strict"
 ## strict settings, from https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 ## NOTE: Changes here need to be propagated to settings.json.
-strictListInference=true
-strictDictionaryInference=true
-strictSetInference=true
-strictParameterNoneValue=true
+deprecateTypingAliases=true
+disableBytesTypePromotions=true
+enableReachabilityAnalysis=true
 enableTypeIgnoreComments=true
-reportMissingModuleSource="error"  # was "warning"
-reportMissingImports="error"
-reportUndefinedVariable="error"
 reportAssertAlwaysTrue="error"
-reportInvalidStringEscapeSequence="error"
-reportInvalidTypeVarUse="error"
-reportMissingTypeStubs="error"
-reportSelfClsParameterName="error"
-reportUnsupportedDunderAll="error"
-reportUnusedExpression="error"
-reportWildcardImportFromLibrary="error"
-reportGeneralTypeIssues="error"
-reportOptionalSubscript="error"
-reportOptionalMemberAccess="error"
-reportOptionalCall="error"
-reportOptionalIterable="error"
-reportOptionalContextManager="error"
-reportOptionalOperand="error"
-reportTypedDictNotRequiredAccess="error"
-reportPrivateImportUsage="error"
-reportUnboundVariable="error"
-reportUnusedCoroutine="error"
+reportCallInDefaultInitializer="error"  # was "none"
 reportConstantRedefinition="error"
 reportDuplicateImport="error"
 reportFunctionMemberAccess="error"
+reportGeneralTypeIssues="error"
+reportImplicitStringConcatenation="none"
 reportImportCycles="error"
 reportIncompatibleMethodOverride="error"
 reportIncompatibleVariableOverride="error"
 reportIncompleteStub="error"
 reportInconsistentConstructor="error"
+reportInvalidStringEscapeSequence="error"
 reportInvalidStubStatement="error"
+reportInvalidTypeVarUse="error"
 reportMatchNotExhaustive="error"
+reportMissingImports="error"
+reportMissingModuleSource="error"  # was "warning"
 reportMissingParameterType="error"
+reportMissingSuperCall="error"  # was "none"
 reportMissingTypeArgument="error"
+reportMissingTypeStubs="error"
+reportOptionalCall="error"
+reportOptionalContextManager="error"
+reportOptionalIterable="error"
+reportOptionalMemberAccess="error"
+reportOptionalOperand="error"
+reportOptionalSubscript="error"
 reportOverlappingOverload="error"
+reportPrivateImportUsage="error"
 reportPrivateUsage="error"
+reportPropertyTypeMismatch="error"  # was "none"
+reportSelfClsParameterName="error"
 reportTypeCommentUsage="error"
+reportTypedDictNotRequiredAccess="error"
+reportUnboundVariable="error"
+reportUndefinedVariable="error"
+reportUninitializedInstanceVariable="error"  # was "none"
 reportUnknownArgumentType="error"
 reportUnknownLambdaType="error"
 reportUnknownMemberType="error"
@@ -227,28 +226,31 @@ reportUnnecessaryCast="error"
 reportUnnecessaryComparison="error"
 reportUnnecessaryContains="error"
 reportUnnecessaryIsInstance="error"
-reportUnusedClass="error"
-reportUnusedImport="error"
-reportUnusedFunction="error"
-reportUnusedVariable="error"
+reportUnnecessaryTypeIgnoreComment="none"
+reportUnsupportedDunderAll="error"
 reportUntypedBaseClass="error"
 reportUntypedClassDecorator="error"
 reportUntypedFunctionDecorator="error"
 reportUntypedNamedTuple="error"
-reportCallInDefaultInitializer="error"  # was "none"
-reportImplicitStringConcatenation="none"
-reportMissingSuperCall="error"  # was "none"
-reportPropertyTypeMismatch="error"  # was "none"
-reportUninitializedInstanceVariable="error"  # was "none"
-reportUnnecessaryTypeIgnoreComment="none"
 reportUnusedCallResult="error"  # was "none"
+reportUnusedClass="error"
+reportUnusedCoroutine="error"
+reportUnusedExpression="error"
+reportUnusedFunction="error"
+reportUnusedImport="error"
+reportUnusedVariable="error"
+reportWildcardImportFromLibrary="error"
+strictDictionaryInference=true
+strictListInference=true
+strictParameterNoneValue=true
+strictSetInference=true
 
 # these options are used when running pytest directly on the command line,
 #   via vscode, and during the 'coverage' env of tox
-[tool.pytest.ini_options]
-minversion = 7.1
+[tool.pytest]
+minversion = "9.0"
 # make XPASS ("unexpectedly passing") result to fail the test suite
-xfail_strict = true
+strict_xfail = true
 # cspell: disable-next-line
 addopts = [
     # report details (verbose)
@@ -290,7 +292,7 @@ addopts = [
 filterwarnings = [
     "error",
 ]
-log_cli_level = "debug"
+log_cli_level = "DEBUG"
 testpaths = ["."]
 pythonpath = ["."]
 norecursedirs = [
@@ -414,9 +416,9 @@ persistent = true
 # version used to run pylint.
 py-version = "3.14"
 
-# When enabled, pylint would attempt to guess common misconfiguration and emit
-# user-friendly hints instead of false-positive error messages.
-suggestion-mode = true
+# # When enabled, pylint would attempt to guess common misconfiguration and emit
+# # user-friendly hints instead of false-positive error messages.
+# suggestion-mode = true
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
@@ -674,7 +676,7 @@ disable = [
     # "unnecessary-lambda",
     "wrong-import-position",  # we put our preambles first
     "subprocess-run-check",  # we do this often & bandit checks this too
-    "unused-import",  # checked by flake8
+    # "unused-import",  # checked by flake8
 ]
 
 # Enable the message, report, category or checker with the given id(s). You can
