@@ -913,11 +913,23 @@
     "python.analysis.inlayHints.functionReturnTypes": true,
     "python.analysis.inlayHints.pytestParameters": true,
     "python.analysis.inlayHints.variableTypes": true,
+    // Pylance complains about this line, ignore it. We need it for supporting
+    // multiple different linting methods, from different entry points
     "python.analysis.typeEvaluation.deprecateTypingAliases": true,
+    // Pylance complains about this line, ignore it. We need it for supporting
+    // multiple different linting methods, from different entry points
     "python.analysis.typeEvaluation.disableBytesTypePromotions": true,
+    // Pylance complains about this line, ignore it. We need it for supporting
+    // multiple different linting methods, from different entry points
     "python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
+    // Pylance complains about this line, ignore it. We need it for supporting
+    // multiple different linting methods, from different entry points
     "python.analysis.typeEvaluation.strictDictionaryInference": true,
+    // Pylance complains about this line, ignore it. We need it for supporting
+    // multiple different linting methods, from different entry points
     "python.analysis.typeEvaluation.strictListInference": true,
+    // Pylance complains about this line, ignore it. We need it for supporting
+    // multiple different linting methods, from different entry points
     "python.analysis.typeEvaluation.strictSetInference": true,
     "python.createEnvironment.trigger": "off",
     "python.missingPackage.severity": "Warning",
