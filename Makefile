@@ -21,21 +21,21 @@ test-makefile:
 	$(info    IS_WSL is "$(IS_WSL)")
 
 .PHONY:
-install:  ## setup user environment
+install:  ### setup user environment
 	./bootstrap.sh
 
 .PHONY:
 setup: install
 
 .PHONY:
-install-dev:  ## setup development environment
+install-dev:  ### setup development environment
 	./bootstrap.sh --dev
 
 .PHONY:
 setup-dev: install-dev
 
 .PHONY:
-build: ## build wheels and sdists
+build: ### build wheels and sdists
 	echo Detected OS: $(DETECTED_OS)
 	./run.sh poetry build
 
@@ -46,7 +46,7 @@ build: ## build wheels and sdists
 # build-release: build ### build for release
 
 .PHONY:
-extract-build: build ## extract built archives into folders
+extract-build: build ### extract built archives into folders
 	cd dist; for x in *; do mkdir "$$x-extracted"; tar -xzf "$$x" -C "$$x-extracted"; done
 
 .PHONY:
@@ -89,29 +89,29 @@ clean-test:  ### clean test results
 clean: clean-build clean-cache clean-test  ### clean build results, caches, and test results
 
 .PHONY:
-clean-old: ## remove all *.old files
+clean-old: ### remove all *.old files
 	find . -name '*.old' -print0 | xargs -r0 rm -f
 
 .PHONY:
-clean-tox: ## remove tox environments
+clean-tox: ### remove tox environments
 	rm -rf .tox
 
 .PHONY:
-sterilize: clean clean-old clean-tox ## clean EVERYTHING
+sterilize: clean clean-old clean-tox ### clean EVERYTHING
 
 .PHONY:
 superclean: sterilize
 
 .PHONY:
-run: ## run software
+run: ### run software
 	./run.sh
 
 .PHONY:
-update-bfi: ## update batteries-forking-included files
+update-bfi: ### update batteries-forking-included files
 	./bfi-update.sh
 
 .PHONY:
-remove-bfi: ## remove the bfi environment
+remove-bfi: ### remove the bfi environment
 	# TODO: add uninstall to bfi
 	rm -rf /opt/conda/miniforge/envs/python-music-hud-tv
 
@@ -131,11 +131,11 @@ legacytest: ### run tests for oldest supported python version
 	./run.sh tox -e py$(OLDEST_PYTHON_VERSION) -- --verbose
 
 .PHONY:
-coverage: ## gather coverage data
+coverage: ### gather coverage data
 	./run.sh tox -e coverage -- --verbose
 
 .PHONY:
-lint: ## run all linters
+lint: ### run all linters
 	./run.sh tox -e lint -- --verbose
 
 .PHONY:
@@ -150,9 +150,9 @@ check: test
 
 # cspell: disable
 .PHONY:
-help: ## show this help message
+help: ### show this help message
 	@IFS=$$'\n' ; \
-	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
+	help_lines=(`fgrep -h '###' $(MAKEFILE_LIST) | grep -v fgrep | grep -v '^#' | sed -e 's/\\$$//' | sed -e 's/###/:/'`); \
 	printf "%s\n\n" "Usage: make [task]"; \
 	printf "%-20s %s\n" "task" "help" ; \
 	printf "%-20s %s\n" "------" "----" ; \
