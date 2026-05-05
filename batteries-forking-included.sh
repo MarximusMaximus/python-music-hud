@@ -4625,12 +4625,12 @@ def; poetry_install() {
                 poetry_ansi=" --no-ansi"
             fi
 
-            poetry_no_dev=""
+            poetry_dev=" --with dev"
             if [ "${dev_mode}" = false ] && [ "${BFI_DEV_MODE:-false}" = false ]; then
-                poetry_no_dev=" --without dev"
+                poetry_dev=" --without dev"
             fi
 
-            poetry_args="${poetry_ansi}${poetry_verbosity}${poetry_no_dev}"
+            poetry_args="${poetry_ansi}${poetry_verbosity}${poetry_dev}"
 
             call log_debug "poetry install args: ${poetry_args}"
 
