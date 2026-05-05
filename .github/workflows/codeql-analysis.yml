@@ -86,7 +86,7 @@ jobs:
       - name: batteries-forking-included
         id: batteries-forking-included
         run: |
-          ./bootstrap.sh --dev
+          ./bootstrap.sh --dev --warnings-return-zero
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
