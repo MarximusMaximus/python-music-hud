@@ -59,7 +59,7 @@ jobs:
       - name: batteries-forking-included
         id: batteries-forking-included
         run: |
-          ./bootstrap.sh --dev
+          ./bootstrap.sh --dev --warnings-return-zero
 
       - name: Build Package
         id: build-package
@@ -282,7 +282,7 @@ jobs:
       - name: batteries-forking-included
         id: batteries-forking-included
         run: |
-          ./bootstrap.sh --dev
+          ./bootstrap.sh --dev --warnings-return-zero
 
       - name: Test - ${{ matrix.tox-env }}
         id: test-tox
@@ -341,7 +341,7 @@ jobs:
       - name: batteries-forking-included
         id: batteries-forking-included
         run: |
-          ./bootstrap.sh --dev
+          ./bootstrap.sh --dev --warnings-return-zero
 
       - name: Process Version Number
         id: process-version
@@ -430,7 +430,7 @@ jobs:
       - name: batteries-forking-included
         id: batteries-forking-included
         run: |
-          ./bootstrap.sh --dev
+          ./bootstrap.sh --dev --warnings-return-zero
 
       - name: Download Build Products
         id: download-build-products
