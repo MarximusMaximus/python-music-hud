@@ -4159,7 +4159,7 @@ def; check_tools__require_cloneable_X() {
     fi
 
     if [ "${git_exists}" = false ]; then
-        check_tools__require_extractable_X
+        call check_tools__require_extractable_X
     fi
 }
 
