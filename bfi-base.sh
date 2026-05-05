@@ -3960,6 +3960,13 @@ if [ "$ret" -ne 0 ]; then
             return "$teetty_ret"
         fi
 
+        filter_warning_lines='
+                        ^Using virtualenv:\|
+                        Installing files in a __pycache__\|
+                        ^  install[(]$
+        '
+        grep_filter_warning_lines="$(join_lines_cleanly "${filter_warning_lines}")"
+
         if \
             { [ "${quiet:-}" != true ] && [ "${verbosity:-0}" -ge "${LOG_LEVEL_INFO}" ] ;} ||
             [ "${OMEGA_DEBUG:-}" = true ] ||
@@ -3969,17 +3976,33 @@ if [ "$ret" -ne 0 ]; then
             # shellcheck disable=SC2002
             ( cat "${_stdout_fifo}" | tee -a "${FULL_LOG}" ) &
             # _stdout_bg_task=$!
-            # shellcheck disable=SC2002
-            ( cat "${_stderr_fifo}" | tee -a "${ERROR_LOG}" "${ERROR_AND_FATAL_LOG}" >&2 ) &
-            # _stderr_bg_task=$!
+            (
+                # shellcheck disable=SC2002
+                cat "${_stderr_fifo}" | while IFS= read -r line || [ -n "$line" ]; do
+                    if [ "$(printf '%s' "$line" | grep "${grep_filter_warning_lines}")" != "" ]; then
+                        printf "%s\n" "$line" | tee -a "${FULL_LOG}" "${WARNING_LOG}" >&2
+                    else
+                        printf "%s\n" "$line" | tee -a "${FULL_LOG}" "${ERROR_LOG}" "${ERROR_AND_FATAL_LOG}" >&2
+                    fi
+                done
+            ) &
+            #_stderr_bg_task=$!
         else
             # output from fifo to files (in background processes)
             # shellcheck disable=SC2002
             ( cat "${_stdout_fifo}" | tee -a "${FULL_LOG}" >/dev/null ) &
             # _stdout_bg_task=$!
-            # shellcheck disable=SC2002
-            ( cat "${_stderr_fifo}" | tee -a "${ERROR_LOG}" "${ERROR_AND_FATAL_LOG}" >/dev/null ) &
-            # _stderr_bg_task=$!
+            (
+                # shellcheck disable=SC2002
+                cat "${_stderr_fifo}" | while IFS= read -r line || [ -n "$line" ]; do
+                    if [ "$(printf '%s' "$line" | grep "${grep_filter_warning_lines}")" != "" ]; then
+                        printf "%s\n" "$line" | tee -a "${FULL_LOG}" "${WARNING_LOG}" >/dev/null
+                    else
+                        printf "%s\n" "$line" | tee -a "${FULL_LOG}" "${ERROR_LOG}" "${ERROR_AND_FATAL_LOG}" >/dev/null
+                    fi
+                done
+            ) &
+            #_stderr_bg_task=$!
         fi
 
         # escapes command so we can use it in eval
