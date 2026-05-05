@@ -4333,6 +4333,10 @@ if [ "$ret" -ne 0 ]; then
                     else
                         ret="${RET_WARNING_UNKNOWN}"
                     fi
+                    # shellcheck disable=SC2154
+                    if [ "${warnings_should_return_zero}" = true ]; then
+                        ret="${RET_SUCCESS}"
+                    fi
                 fi
             fi
 

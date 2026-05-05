@@ -99,6 +99,12 @@ Global Flags:
     -r, --report        display report at end of run
                         default: true
     +r, --no-report     do NOT display report at end of run
+    -w, --warnings-return-exit-codes
+                        warnings will use exit codes to report their existence
+                        default: on
+    +w, --warnings-return-zero
+                        warnings will not use exit codes, if only warnings occur,
+                        the exit code will be 0
     -d, --dev, --developer
                         install as developer (include development dependencies)
                         default: false
@@ -3381,6 +3387,7 @@ __parse_args_shift_by=0
 
 should_print_usage=false; export should_print_usage
 should_print_version=false; export should_print_version
+warnings_should_return_zero=false; export warnings_should_return_zero
 colorized_output=true; export colorized_output
 verbosity=1; export verbosity
 quiet=false; export quiet
@@ -3510,6 +3517,15 @@ def; parse_args__common_doubledash() {
             call print_usage
             call log_error "\"--verbosity\" requires a non-empty option argument."
             exit "${RET_ERROR_INVALID_ARGUMENT}"
+            ;;
+
+        -w|--warnings-return-exit-codes)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__common_doubledash;\t found warnings-return-exit-codes arg"
+            warnings_should_return_zero=false
+            ;;
+        +w|--warnings-return-zero)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__common_doubledash;\t found warnings-return-zero arg"
+            warnings_should_return_zero=true
             ;;
 
         -c|--color)
@@ -3685,6 +3701,11 @@ def; parse_args__common_singledash_multi() {
             temp_verbosity=$((temp_verbosity + 1)) # Each -v argument adds 1 to verbosity.
             ;;
 
+        w)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__common_singledash_multi;\t found warnings-return-exit-codes flag"
+            warnings_should_return_zero=false
+            ;;
+
         c)
             call log_ultradebug "$(get_my_real_basename)::parse_args__common_singledash_multi;\t found color flag"
             colorized_output=true
@@ -3736,6 +3757,11 @@ def; parse_args__common_singleplus_multi() {
             temp_verbosity=$((temp_verbosity - 1))
             ;;
 
+        w)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__common_singleplus_multi;\t found warnings-return-zero flag"
+            warnings_should_return_zero=true
+            ;;
+
         c)
             call log_ultradebug "$(get_my_real_basename)::parse_args__common_singleplus_multi;\t found no-color flag"
             colorized_output=false;
@@ -3784,6 +3810,7 @@ def; parse_args__common_set_and_export() {
     export quiet
     export should_print_usage
     export should_print_version
+    export warnings_should_return_zero
     export print_report
     export project_base_name
     export project_dir
@@ -3798,6 +3825,7 @@ def; parse_args__common_set_and_export() {
     call log_debug "quiet=%s" "${quiet}"
     call log_debug "should_print_usage=%s" "${should_print_usage}"
     call log_debug "should_print_version=%s" "${should_print_version}"
+    call log_debug "warnings_should_return_zero=%s" "${warnings_should_return_zero}"
     call log_debug "print_report=%s" "${print_report}"
     call log_debug "project_dir=%s" "${project_dir}"
     call log_debug "project_base_name=%s" "${project_base_name}"
