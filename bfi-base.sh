@@ -13,6 +13,10 @@ export BFI_VERSION
 # TODO: flag for not tracing marximus-shell-extensions extended preamble functions
 # TODO: flag for not tracing bfi-base functions
 
+# function naming note:
+# _G means modifies globals
+# _X means can short circuit exit current subshell/function
+
 ################################################################################
 #region marximus-shell-extensions Base Preamble
 

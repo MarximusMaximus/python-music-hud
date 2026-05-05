@@ -14,6 +14,10 @@ if [ "${DO_SET_X_ACTIVATE}" = true ]; then
     set -x
 fi
 
+# function naming note:
+# _G means modifies globals
+# _X means can short circuit exit current subshell/function
+
 ################################################################################
 #region marximus-shell-extensions Base Preamble
 

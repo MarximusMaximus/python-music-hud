@@ -16,6 +16,10 @@ fi
 
 # NOTE: see usage from batteries-forking-included.sh for command line arguments
 
+# function naming note:
+# _G means modifies globals
+# _X means can short circuit exit current subshell/function
+
 ################################################################################
 #region marximus-shell-extensions Base Preamble
 

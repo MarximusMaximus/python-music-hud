@@ -17,6 +17,10 @@ DOLLAR_UNDER="$_"
 # TODO: add includes for bfi-base & bfi (to allow running from top level for manual testing)
 # TODO: add do_deploy function
 
+# function naming note:
+# _G means modifies globals
+# _X means can short circuit exit current subshell/function
+
 ################################################################################
 #region marximus-shell-extensions Base Preamble
 

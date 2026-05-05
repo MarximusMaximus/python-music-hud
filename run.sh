@@ -21,6 +21,10 @@ fi
 # TODO: OPTION_SETTRACE breaks when including files
 # TODO: nullcall should output something to stop us from tracking lines during its run
 
+# function naming note:
+# _G means modifies globals
+# _X means can short circuit exit current subshell/function
+
 ################################################################################
 #region marximus-shell-extensions Base Preamble
 

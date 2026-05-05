@@ -9,6 +9,10 @@ DOLLAR_UNDER="$_"
 # TODO: needs a fence
 # TODO: flag for not tracing batteries-forking-included functions
 
+# function naming note:
+# _G means modifies globals
+# _X means can short circuit exit current subshell/function
+
 ################################################################################
 #region Usage Text
 
