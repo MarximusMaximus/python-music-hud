@@ -4368,7 +4368,8 @@ if [ "$ret" -ne 0 ]; then
                 fi
 
                 stored_ret="$ret"
-                call log_info "%s exiting with return code: %d" "${message%EOL}" "$ret"
+
+                call log_info "%s exiting with return code: %d" "${message%EOL}" "$stored_ret"
                 if [ "$stored_ret" -eq 0 ]; then
                     call log_success_final "%s Completed Successfully." "${message%EOL}"
                 elif [ "${LOG_FATAL_COUNT}" -gt 0 ]; then
@@ -4382,7 +4383,7 @@ if [ "$ret" -ne 0 ]; then
                 call log_ultradebug "Skipping Final Report b/c should_print is '%s'." "${should_print}"
             fi
 
-            exit "$ret"
+            exit "$stored_ret"
         )
         report_ret=$?
         SHELL_SESSION_FILE="${PSHELL_SESSION_FILE}"
