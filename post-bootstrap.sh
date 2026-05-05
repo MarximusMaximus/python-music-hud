@@ -3188,7 +3188,7 @@ if [ "$ret" -ne 0 ]; then
     #region Text Formatting Functions
 
     #-------------------------------------------------------------------------------
-    def; unident_text() {
+    def; unindent_text() {
         (
             text="$1"
             leading="$(echo "${text}" | head -n 1 | sed -e "s/\( *\)\(.*\)/\1/")"
