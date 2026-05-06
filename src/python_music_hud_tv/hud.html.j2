@@ -120,58 +120,58 @@
 </head>
 <body><div max-width="100%">
     <table width="98%">
-        <tr><td class="currentTitle">
-            <div class="time">{music_data[current_play_head_time_and_length_pretty]}</div>
+        <tr><td id="currentTitle" class="currentTitle">
+            <div id="time" class="time">{music_data[current_play_head_time_and_length_pretty]}</div>
             {music_data[songs][current][title]}
         </td></tr>
     </table>
     <table width="98%">
-        <tr><td class="currentArtist">
+        <tr><td id="currentArtist" class="currentArtist">
             {music_data[songs][current][artist]}
         </td></tr>
-        <tr><td class="currentStyleHeader">
+        <tr><td id="currentStyleHeader" class="currentStyleHeader">
             {page_data[current_dance_style_header]}
         </td></tr>
-        <tr><td class="currentStyle">
+        <tr><td id="currentStyle" class="currentStyle">
             <ul>
                 {music_data[songs][current][comment]}
             </ul>
         </td></tr>
     </table>
-    <div class="bottom">
+    <div id="bottom" class="bottom">
         {page_data[next_divider]}
-        <table class="nextTable">
+        <table id="nextTable"" class="nextTable">
             <tr>
-                <td class="headerNext">
+                <td id="headerNext" class="headerNext">
                     {page_data[next_header]}
                 </td>
             </tr>
-            <tr><td class="nextTitle">
+            <tr><td id="nextTitle" class="nextTitle">
                 {music_data[songs][next][title]} {music_data[songs][next_next][duration_pretty]}
             </td></tr>
-            <tr><td class="nextArtist">
+            <tr><td id="nextArtist" class="nextArtist">
                 {music_data[songs][next][artist]}
             </td></tr>
-            <tr><td class="nextStyleHeader">
+            <tr><td id="nextStyleHeader"" class="nextStyleHeader">
                 {page_data[next_dance_style_header]}
             </td></tr>
-            <tr><td class="nextStyle">
+            <tr><td id="nextStyle" class="nextStyle">
                 <ul>
                     {music_data[songs][next][comment]}
                 </ul>
             </td></tr>
         </table>
     </div>
-    <div class="bottom-right">
-        <table class="nextNextTable">
+    <div id="bottomRight" class="bottom-right">
+        <table id="nextNextTable"" class="nextNextTable">
             <tr>
-                <td>
+                <td id="nextNextTableTD">
                     {page_data[next_next_header]} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}
                 </td>
             </tr>
         </table>
     </div>
-    <div class="realTime">
+    <div id="realTime" class="realTime">
         {page_data[real_time]}
     </div>
 </div></body>
