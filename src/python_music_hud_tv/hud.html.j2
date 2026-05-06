@@ -175,4 +175,39 @@
         {page_data[real_time]}
     </div>
 </div></body>
+
+<script>
+let UPS = 10;
+const UPDATE_INTERVAL = 1000 / UPS;
+
+const MusicHudTV = {{
+    "interval_update": null,
+    "el_realTime": null,
+
+    //-------------------------------------------------------------------------------
+    "_initialize": function() {{
+        MusicHudTV.el_realTime = document.getElementById("realTime");
+
+        MusicHudTV.interval_update = setInterval(
+            MusicHudTV.update,
+            UPDATE_INTERVAL,
+        )
+
+    }},
+    //-------------------------------------------------------------------------------
+    "update": function() {{
+        MusicHudTV.updateClock();
+    }},
+    //-------------------------------------------------------------------------------
+    "updateClock": function() {{
+        let now = new Date();
+        let nowStr = now.toLocaleTimeString();
+        MusicHudTV.el_realTime.innerHTML = nowStr;
+    }}
+}}
+
+MusicHudTV._initialize();
+
+</script>
+
 </html>
