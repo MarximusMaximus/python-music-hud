@@ -55,13 +55,13 @@
     .currentTitle {{
         font-size: 4vw;
     }}
-    .currentTitle div.title {{
+    .currentTitle div.currentTrackTitle {{
         width: 68%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }}
-    .currentTitle div.time {{
+    .currentTitle div.currentTrackTime {{
         position: absolute;
         top: 1%;
         right: 1%;
@@ -70,11 +70,11 @@
         font-size: 2vw;
         color: color-mix(in srgb, var(--FG_COLOR) 80%, transparent);
     }}
-    .currentStyleHeader {{
+    .currentDanceStyleHeader {{
         font-size: 2vw;
         color: color-mix(in srgb, var(--FG_COLOR) 80%, transparent);
     }}
-    .currentStyle {{
+    .currentDanceStyle {{
         font-size: 4.2vw;
     }}
 
@@ -87,7 +87,7 @@
         color: color-mix(in srgb, var(--FG_COLOR) 70%, transparent);
     }}
 
-    .headerNext {{
+    .nextHeader {{
         font-size: 2.5vw;
     }}
     .nextTitle {{
@@ -96,10 +96,10 @@
     .nextArtist {{
         font-size: 1.5vw;
     }}
-    .nextStyleHeader {{
+    .nextDanceStyleHeader {{
         font-size: 1.5vw;
     }}
-    .nextStyle {{
+    .nextDanceStyle {{
         font-size: 2vw;
     }}
 
@@ -121,19 +121,19 @@
 <body><div max-width="100%">
     <table width="98%">
         <tr><td id="currentTitle" class="currentTitle">
-            <div id="time" class="time">{music_data[current_play_head_time_and_length_pretty]}</div>
-            {music_data[songs][current][title]}
+            <div id="currentTrackTime" class="currentTrackTime">{music_data[current_play_head_time_and_length_pretty]}</div>
+            <div id="currentTrackTitle" class="currentTrackTitle">{music_data[songs][current][title]}</div>
         </td></tr>
     </table>
     <table width="98%">
         <tr><td id="currentArtist" class="currentArtist">
             {music_data[songs][current][artist]}
         </td></tr>
-        <tr><td id="currentStyleHeader" class="currentStyleHeader">
+        <tr><td id="currentDanceStyleHeader" class="currentDanceStyleHeader">
             {page_data[current_dance_style_header]}
         </td></tr>
-        <tr><td id="currentStyle" class="currentStyle">
-            <ul>
+        <tr><td id="currentDanceStyle" class="currentDanceStyle">
+            <ul id="currentDanceStyleList" class="currentDanceStyleList">
                 {music_data[songs][current][comment]}
             </ul>
         </td></tr>
@@ -142,7 +142,7 @@
         {page_data[next_divider]}
         <table id="nextTable"" class="nextTable">
             <tr>
-                <td id="headerNext" class="headerNext">
+                <td id="nextHeader" class="nextHeader">
                     {page_data[next_header]}
                 </td>
             </tr>
@@ -152,11 +152,11 @@
             <tr><td id="nextArtist" class="nextArtist">
                 {music_data[songs][next][artist]}
             </td></tr>
-            <tr><td id="nextStyleHeader"" class="nextStyleHeader">
+            <tr><td id="nextDanceStyleHeader"" class="nextDanceStyleHeader">
                 {page_data[next_dance_style_header]}
             </td></tr>
-            <tr><td id="nextStyle" class="nextStyle">
-                <ul>
+            <tr><td id="nextDanceStyle" class="nextDanceStyle">
+                <ul id="nextDanceStyleList" class="nextDanceStyleList">
                     {music_data[songs][next][comment]}
                 </ul>
             </td></tr>
@@ -166,29 +166,54 @@
         <table id="nextNextTable"" class="nextNextTable">
             <tr>
                 <td id="nextNextTableTD">
-                    {page_data[next_next_header]} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}
+                    <div id="nextNextSong">{page_data[next_next_header]} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}</div>
                 </td>
             </tr>
         </table>
     </div>
-    <div id="realTime" class="realTime">
-        {page_data[real_time]}
-    </div>
+    <div id="realTime" class="realTime"></div>
 </div></body>
 
 <script>
-let UPS = 10;
+let UPS = 2;
 const UPDATE_INTERVAL = 1000 / UPS;
 
 const MusicHudTV = {{
-    "interval_update": null,
+    "timer_update": null,
+
     "el_realTime": null,
+
+    "el_currentTrackTitle": null,
+    "el_currentArtist": null,
+    "el_currentTrackTime": null,
+    "el_currentDanceStyleHeader": null,
+    "el_currentDanceStyle": null,
+
+    "el_nextTitle": null,
+    "el_nextArtist": null,
+    "el_nextDanceStyleHeader": null,
+    "el_nextDanceStyle": null,
+
+    "el_nextNextSong": null,
 
     //-------------------------------------------------------------------------------
     "_initialize": function() {{
         MusicHudTV.el_realTime = document.getElementById("realTime");
 
-        MusicHudTV.interval_update = setInterval(
+        MusicHudTV.el_currentTrackTitle = document.getElementById("currentTrackTitle");
+        MusicHudTV.el_currentTrackTime = document.getElementById("currentTrackTime");
+        MusicHudTV.el_currentArtist = document.getElementById("currentArtist");
+        MusicHudTV.el_currentDanceStyleHeader = document.getElementById("currentDanceStyleHeader");
+        MusicHudTV.el_currentDanceStyleList = document.getElementById("currentDanceStyleList");
+
+        MusicHudTV.el_nextTitle = document.getElementById("nextTitle");
+        MusicHudTV.el_nextArtist = document.getElementById("nextArtist");
+        MusicHudTV.el_nextDanceStyleHeader = document.getElementById("nextDanceStyleHeader");
+        MusicHudTV.el_nextDanceStyleList = document.getElementById("nextDanceStyleList");
+
+        MusicHudTV.el_nextNextSong = document.getElementById("nextNextSong");
+
+        MusicHudTV.timer_update = setInterval(
             MusicHudTV.update,
             UPDATE_INTERVAL,
         )
@@ -197,13 +222,50 @@ const MusicHudTV = {{
     //-------------------------------------------------------------------------------
     "update": function() {{
         MusicHudTV.updateClock();
+
+        void MusicHudTV.updateData().catch(err => console.error(err));
     }},
     //-------------------------------------------------------------------------------
     "updateClock": function() {{
         let now = new Date();
         let nowStr = now.toLocaleTimeString();
         MusicHudTV.el_realTime.innerHTML = nowStr;
-    }}
+    }},
+    //------------------------------------------------------------------------------
+    "updateData": async function() {{
+        try {{
+            let response = await fetch("/data");
+
+            if (!response.ok) {{
+                console.log("HTTP Error:", response.status);
+                return;
+            }}
+
+            data = await response.json();
+
+            MusicHudTV.el_currentTrackTitle.innerHTML = data["music_data"]["songs"]["current"]["title"];
+            MusicHudTV.el_currentTrackTime.innerHTML = data["music_data"]["current_play_head_time_and_length_pretty"];
+            MusicHudTV.el_currentArtist.innerHTML = data["music_data"]["songs"]["current"]["artist"];
+            MusicHudTV.el_currentDanceStyleHeader.innerHTML = data["page_data"]["current_dance_style_header"];
+            MusicHudTV.el_currentDanceStyleList.innerHTML = data["music_data"]["songs"]["current"]["comment"];
+
+            MusicHudTV.el_nextTitle.innerHTML = data["music_data"]["songs"]["next"]["title"] + " " + data["music_data"]["songs"]["next_next"]["duration_pretty"];
+            MusicHudTV.el_nextArtist.innerHTML = data["music_data"]["songs"]["next"]["artist"]
+            MusicHudTV.el_nextDanceStyleHeader.innerHTML = data["page_data"]["next_dance_style_header"]
+            MusicHudTV.el_nextDanceStyleList.innerHTML = data["music_data"]["songs"]["next"]["comment"]
+
+            MusicHudTV.el_nextNextSong.innerHTML = data["page_data"]["next_next_header"] + " " + data["music_data"]["songs"]["next_next"]["title"] + " " + data["music_data"]["songs"]["next_next"]["duration_pretty"] + " " + data["music_data"]["songs"]["next_next"]["comment"]
+        }} catch (error) {{
+            console.log(
+                "an error was thrown:\n" +
+                error + "\n" +
+                "name: '" + error.name + "'\n" +
+                "message: '" + error.message + "'\n'" +
+                "stack: '" + error.stack + "'"
+            );
+            clearInterval(MusicHudTV.timer_update);
+        }}
+    }},
 }}
 
 MusicHudTV._initialize();
