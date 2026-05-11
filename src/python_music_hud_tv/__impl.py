@@ -471,6 +471,8 @@ class MusicHudServer():
             config=self.config,
         )
 
+        logger.debug("server started")
+
         while self.keep_running:
             server.handle_request()
         server.server_close()
