@@ -6,6 +6,10 @@
     show-source = true
     statistics = true
     doctests = true
+    extend-exclude =
+        .git,
+        __pycache__,
+        builtins.pyi
     ignore =
         # Missing docstrings
         # TODO: re-enable
