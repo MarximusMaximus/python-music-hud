@@ -3248,7 +3248,7 @@ def; post_bootstrap() {
     call require_not_root_user_XY
 
     # use
-    # call teetty_G "COMMANDHERE WITH ARGS"
+    # call teetty_G "COMMAND_HERE WITH ARGS"
     # to call an external program and hae it's output get routed to the logs
 
     # WARNING: DO NOT EDIT ABOVE THIS LINE

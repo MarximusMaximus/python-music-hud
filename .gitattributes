@@ -152,7 +152,7 @@ zshrc               text eol=lf
 *.asx               binary
 # Video
 *.avi               binary
-# Linuxy Shell Script (MUST be lf)
+# Linux-y Shell Script (MUST be lf)
 *.bash              text eol=lf
 # Config File
 *.bash_history      text eol=lf
@@ -234,7 +234,7 @@ zshrc               text eol=lf
 *.dbproj            text eol=crlf merge=union
 # Datafile
 *.df                text
-# Copmiled Dynamic Library
+# Compiled Dynamic Library
 *.dll               binary
 # Document
 *.doc               diff=astextplain
@@ -274,7 +274,7 @@ zshrc               text eol=lf
 *.fig               binary
 # Visual Studio
 *.filters           text eol=crlf merge=union
-# Linuxy Shell Script (MUST be lf)
+# Linux-y Shell Script (MUST be lf)
 *.fish              text eol=lf
 # Video
 *.fla               binary
@@ -287,6 +287,7 @@ zshrc               text eol=lf
 # Graphics
 *.gif               binary
 # Graphic
+# cspell:disable-next-line
 *.gifv              binary
 # Config File
 *.gitignore         text
@@ -514,7 +515,7 @@ zshrc               text eol=lf
 *.pbxproj           binary -merge=union
 # Precompiled Headers
 *.pch               binary
-# Copmiled Dynamic Library
+# Compiled Dynamic Library
 *.pdb               binary
 # Document
 *.pdf               binary
@@ -624,7 +625,7 @@ zshrc               text eol=lf
 *.scm               text
 # CSS
 *.scss              text diff=css
-# Linuxy Shell Script (MUST be lf)
+# Linux-y Shell Script (MUST be lf)
 *.sh                text eol=lf
 # Shader
 *.shader            text
@@ -780,7 +781,7 @@ zshrc               text eol=lf
 *.zlogout           text eol=lf
 # Config File
 *.zprofile          text eol=lf
-# Linuxy Shell Script (MUST be lf)
+# Linux-y Shell Script (MUST be lf)
 *.zsh               text eol=lf
 # Config File
 *.zshenv            text eol=lf

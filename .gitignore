@@ -1,4 +1,4 @@
-# NOTE: Project specific overries are at end of file
+# NOTE: Project specific overrides are at end of file
 
 ################################################################################
 #region OSes
@@ -44,6 +44,7 @@ ehthumbs.db
 ehthumbs_vista.db
 
 # Folder config file
+# cspell:disable-next-line
 [Dd]esktop.ini
 
 # Recycle Bin used on file shares
@@ -152,6 +153,7 @@ __pycache__/
 #region autotools (autoconf, automake, make, etc)
 
 aclocal.m4
+# cspell:disable-next-line
 autom4te.cache/
 config.status
 configure.scan

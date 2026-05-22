@@ -340,3 +340,8 @@ repos:
 #         language: pygrep
 #         entry: ng-model="?[^.]+[" ]
 #         files: \.html$
+
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v10.0.0
+    hooks:
+      - id: cspell # Spell check changed files
