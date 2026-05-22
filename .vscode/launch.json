@@ -4,6 +4,15 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        {
+            "name": "Python Debugger",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/src/python_music_hud_tv/bin/python-music-hud-tv.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
         // {
         //     "name": "Run python-music-hud-tv",
         //     "type": "f5anything",
