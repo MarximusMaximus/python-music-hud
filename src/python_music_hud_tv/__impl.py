@@ -21,7 +21,11 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: Make all data in page updating asynchronous.
+# TODO: worker pool for js fetch?
+# TODO: asyncio/thread for getting data from Music
+# TODO: asyncio http server?
+# TODO: move display logic from server side data to client side processing
+# TODO: render full config into page from server side rendering at page load
 
 ################################################################################
 #region Imports
@@ -31,6 +35,9 @@ logger_log = logger.log
 
 from copy import (
     deepcopy                        as copy_deepcopy,
+)
+from http import (
+    HTTPStatus                      as http_HTTPStatus,
 )
 from http.server import (
     HTTPServer                      as http_server_HTTPServer,
@@ -158,6 +165,40 @@ DEFAULT_CONFIG = MusicHudConfig(
     last_dance_title="(I've Had) The Time of My Life",
 )
 
+EMPTY_MUSIC_DATA: MusicData = {
+    "current_play_head_time_in_seconds": 0,
+    "current_play_head_time_pretty": "",
+    "current_play_head_time_and_length_pretty": "",
+    "current_playlist_name": "",
+    "songs": {
+        "current": {
+            "title": "",
+            "artist": "",
+            "duration_in_seconds": 0,
+            "duration_pretty": "",
+            "grouping": "",
+            "comment": "",
+        },
+        "next": {
+            "title": "",
+            "artist": "",
+            "duration_in_seconds": 0,
+            "duration_pretty": "",
+            "grouping": "",
+            "comment": "",
+        },
+        "next_next": {
+            "title": "",
+            "artist": "",
+            "duration_in_seconds": 0,
+            "duration_pretty": "",
+            "grouping": "",
+            "comment": "",
+        },
+    },
+}
+
+
 #endregion Constants
 ################################################################################
 
@@ -188,6 +229,7 @@ __ignore_unused_arguments: bool = True
 ################################################################################
 #region Public Functions
 
+#-------------------------------------------------------------------------------
 def loadMusicHudConfig(
     path: FileDescriptorOrPath | pathlib_Path,
 ) -> MusicHudConfig:
@@ -206,15 +248,18 @@ def loadMusicHudConfig(
 
     return config
 
+#-------------------------------------------------------------------------------
 def durationInSecondsToPretty(duration_in_seconds: int) -> str:
     minutes = int(duration_in_seconds / 60)
     seconds = int(duration_in_seconds % 60)
     length_pretty = f"{minutes:d}:{seconds:02d}"
     return length_pretty
 
+#-------------------------------------------------------------------------------
 def getApp(name: str) -> Application:
     return SBApplication.applicationWithBundleIdentifier_(name)  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
+#-------------------------------------------------------------------------------
 def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
     ret_track: Track = {
         "title": "",
@@ -238,6 +283,7 @@ def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
 
     return ret_track
 
+#-------------------------------------------------------------------------------
 def appleMusicGetPlaylistName() -> str:
     ret_name = ""
 
@@ -254,6 +300,7 @@ def appleMusicGetPlaylistName() -> str:
 
     return ret_name
 
+#-------------------------------------------------------------------------------
 def appleMusicGetCurrentPlayHeadTimeInSeconds() -> int:
     ret_time = 0
 
@@ -276,6 +323,7 @@ def appleMusicGetCurrentPlayHeadTimeInSeconds() -> int:
 
     return ret_time
 
+#-------------------------------------------------------------------------------
 def appleMusicGetCurrentTrack() -> Track:
     app_apple_music = getApp("com.apple.Music")
 
@@ -291,6 +339,7 @@ def appleMusicGetCurrentTrack() -> Track:
 
     return ret_track
 
+#-------------------------------------------------------------------------------
 def appleMusicGetNextTrack(offset: int = 1) -> Track:
     app_apple_music = getApp("com.apple.Music")
 
@@ -332,70 +381,40 @@ def appleMusicGetNextTrack(offset: int = 1) -> Track:
 
     return ret_track
 
+#-------------------------------------------------------------------------------
 def getMusicData() -> MusicData:
     """
     TODO
     """
 
-    music_data: MusicData = {
-        "current_play_head_time_in_seconds": 0,
-        "current_play_head_time_pretty": "",
-        "current_play_head_time_and_length_pretty": "",
-        "current_playlist_name": "",
-        "songs": {
-            "current": {
-                "title": "",
-                "artist": "",
-                "duration_in_seconds": 0,
-                "duration_pretty": "",
-                "grouping": "",
-                "comment": "",
-            },
-            "next": {
-                "title": "",
-                "artist": "",
-                "duration_in_seconds": 0,
-                "duration_pretty": "",
-                "grouping": "",
-                "comment": "",
-            },
-            "next_next": {
-                "title": "",
-                "artist": "",
-                "duration_in_seconds": 0,
-                "duration_pretty": "",
-                "grouping": "",
-                "comment": "",
-            },
-        },
-    }
+    music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
 
     if (
         g_app_apple_music is not None and
         g_app_apple_music.isRunning() and
         g_app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
-        logger.debug("getting info from Apple Music App")
+        # logger.debug("getting info from Apple Music App")
         music_data["songs"]["current"] = appleMusicGetCurrentTrack()
         music_data["songs"]["next"] = appleMusicGetNextTrack()
         music_data["songs"]["next_next"] = appleMusicGetNextTrack(offset=2)
         music_data["current_play_head_time_in_seconds"] = \
             appleMusicGetCurrentPlayHeadTimeInSeconds()
         music_data["current_playlist_name"] = appleMusicGetPlaylistName()
+
+        music_data["current_play_head_time_pretty"] = \
+            durationInSecondsToPretty(music_data["current_play_head_time_in_seconds"])
+
+        music_data["current_play_head_time_and_length_pretty"] = (
+            f'{music_data["current_play_head_time_pretty"]}/' +
+            f'{music_data["songs"]["current"]["duration_pretty"]}'
+        )
     else:
         logger.debug("no music app playing")
 
-    music_data["current_play_head_time_pretty"] = \
-        durationInSecondsToPretty(music_data["current_play_head_time_in_seconds"])
-
-    music_data["current_play_head_time_and_length_pretty"] = (
-        f'{music_data["current_play_head_time_pretty"]}/' +
-        f'{music_data["songs"]["current"]["duration_pretty"]}'
-    )
-
     return music_data
 
-
+#-------------------------------------------------------------------------------
 def commentToStyle(comment: str | None) -> str:
     """
     TODO
@@ -432,10 +451,12 @@ class MusicHudServer():
 
     config: MusicHudConfig
     keep_running = True
-    thread: threading_Thread | None = None
+    server_thread: threading_Thread | None = None
+    music_data_thread: threading_Thread | None = None
     test_case: Any = None
+    music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
 
-    #-------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def __init__(
         self,
         *args: Any,
@@ -462,13 +483,32 @@ class MusicHudServer():
 
         logger.debug("setting up server")
 
-        self.thread = threading_Thread(
+        self.server_thread = threading_Thread(
             target=self.serverThread,
             args=[
                 MusicHudHTTPRequestHandler,
             ],
         )
-        self.thread.start()
+        self.server_thread.start()
+
+        self.music_data_thread = threading_Thread(
+            target=self.musicDataThread,
+            args=[],
+        )
+        self.music_data_thread.start()
+
+    #---------------------------------------------------------------------------
+    def musicDataThread(self) -> None:
+        """
+        _summary_
+        """
+        logger.debug("musicDataThread started")
+
+        while self.keep_running:
+            new_music_data = getMusicData()
+            self.music_data = new_music_data
+
+        logger.debug("musicDataThread stopped")
 
     #---------------------------------------------------------------------------
     def serverThread(self, handler_cls: Any) -> None:
@@ -482,6 +522,7 @@ class MusicHudServer():
             server_address=("localhost", self.config["server_port"]),
             RequestHandlerClass=handler_cls,
             config=self.config,
+            server=self,
         )
 
         logger.debug("server started")
@@ -490,7 +531,7 @@ class MusicHudServer():
             server.handle_request()
         server.server_close()
 
-        logger.debug("server closed")
+        logger.debug("server stopped")
 
     #---------------------------------------------------------------------------
     def stopServer(self) -> None:
@@ -499,8 +540,8 @@ class MusicHudServer():
         """
 
         self.keep_running = False
-        if self.thread is not None:
-            self.thread.join()
+        if self.server_thread is not None:
+            self.server_thread.join()
 
 #===============================================================================
 class MusicHudHTTPServer(http_server_HTTPServer):
@@ -508,12 +549,14 @@ class MusicHudHTTPServer(http_server_HTTPServer):
     HTTP Server that responds to http requests.
     """
 
-    config: MusicHudConfig | None = None
+    server: MusicHudServer
+    config: MusicHudConfig
 
     #-------------------------------------------------------------------------
     def __init__(
         self,
         *args: Any,
+        server: MusicHudServer,
         config: MusicHudConfig | None = None,
         **kwargs: Any,
     ):
@@ -525,19 +568,24 @@ class MusicHudHTTPServer(http_server_HTTPServer):
             Defaults to None.
         """
         super().__init__(*args, **kwargs)
+        self.server = server
         if config is None:
             config = copy_deepcopy(DEFAULT_CONFIG)
         self.config = config
 
 #===============================================================================
-# noinspection PyClassHasNoInit
 class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
     """
     TODO
     """
 
+    server: MusicHudHTTPServer  # pyright: ignore[reportIncompatibleVariableOverride]
+
     #---------------------------------------------------------------------------
-    def _do_get__stop_server(self, config: MusicHudConfig) -> None:
+    def _do_get__stop_server(
+        self,
+        config: MusicHudConfig,
+    ) -> None:
         """
         TODO: write doc
         """
@@ -560,7 +608,9 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
 
         current_playlist_name: str = ""
 
-        music_data = getMusicData()
+        # GIL allows us to copy the whole data structure instead of locking it
+        # for the whole function; better? worse?
+        music_data = copy_deepcopy(self.server.server.music_data)
 
         if music_data["songs"]["next_next"]["title"] in config["secret_titles"]:
             music_data["songs"]["next_next"]["title"] = "*****"
@@ -748,7 +798,9 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
 
         data: dict[Any, Any] = {}
 
-        music_data = getMusicData()
+        # GIL allows us to copy the whole data structure instead of locking it
+        # for the whole function; better? worse?
+        music_data = copy_deepcopy(self.server.server.music_data)
 
         if music_data["songs"]["next_next"]["title"] in config["secret_titles"]:
             music_data["songs"]["next_next"]["title"] = "*****"
@@ -937,9 +989,7 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         """
         # pylint: disable=possibly-unused-variable
 
-        config: MusicHudConfig = self.server.__dict__.get(
-            "config", copy_deepcopy(DEFAULT_CONFIG),
-        )
+        config: MusicHudConfig = self.server.config
 
         parsed_path = urllib_parse_urlparse(self.path)
         real_path = parsed_path.path
@@ -967,10 +1017,52 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
                 return
 
     #---------------------------------------------------------------------------
+    def log_request(
+        self,
+        code: Any = "-",
+        size: Any = "-",
+    ) -> None:
+        """Log an accepted request.
+
+        This is called by send_response().
+        """
+        if isinstance(code, http_HTTPStatus):
+            code = code.value
+        self.log_message(
+            '"%s" %s %s',
+            self.requestline,
+            str(code),
+            str(size),
+        )
+
+    #---------------------------------------------------------------------------
+    def log_error(
+        self,
+        format: str,  # pylint: disable=redefined-builtin
+        *args: Any,
+    ) -> None:
+        """Log an error.
+
+        This is called when a request cannot be fulfilled.  By
+        default it passes the message on to log_message().
+
+        Arguments are the same as for log_message().
+        """
+        formatted_args = format % args
+        formatted_args = formatted_args.translate(self._control_char_table)  # type: ignore[attr-defined]  # noqa: E501,B950,W505
+
+        message = (
+            f"{self.address_string()} - - " +
+            f"[{self.log_date_time_string()}] {formatted_args}"
+        )
+
+        logger.error(message)
+
+    #---------------------------------------------------------------------------
     def log_message(
         self,
         format: str,  # pylint: disable=redefined-builtin
-        *args: list[Any],
+        *args: Any,
     ) -> None:
         """Log an arbitrary message.
 
@@ -985,9 +1077,9 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
 
         The client ip and current date/time are prefixed to
         every message.
-
         """
         formatted_args = format % args
+        formatted_args = formatted_args.translate(self._control_char_table)  # type: ignore[attr-defined]  # noqa: E501,B950,W505
 
         message = (
             f"{self.address_string()} - - " +
@@ -1014,7 +1106,8 @@ def __main(argv: list[str]) -> int:
         int: return code
     """
     # ignore unused vars from func signature
-    argv = argv  # pylint: disable=self-assigning-variable
+    if __ignore_unused_arguments is False:
+        argv = argv  # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
 
     logger_log(logging_FATAL, "This module should not be run directly.")
 

@@ -241,7 +241,7 @@ const MusicHudTV = {{
                 return;
             }}
 
-            data = await response.json();
+            const data = await response.json();
 
             MusicHudTV.el_currentTrackTitle.innerHTML = data["music_data"]["songs"]["current"]["title"];
             MusicHudTV.el_currentTrackTime.innerHTML = data["music_data"]["current_play_head_time_and_length_pretty"];
@@ -263,6 +263,18 @@ const MusicHudTV = {{
                 "message: '" + error.message + "'\n'" +
                 "stack: '" + error.stack + "'"
             );
+
+//(index):237  GET http://127.0.0.1:8080/data net::ERR_INSUFFICIENT_RESOURCES
+//updateData @ (index):237
+//update @ (index):226
+//(index):259 an error was thrown:
+//TypeError: Failed to fetch
+//name: 'TypeError'
+//message: 'Failed to fetch'
+//'stack: 'TypeError: Failed to fetch
+//    at Object.updateData ((index):237:34)
+//    at :8080/update (http://127.0.0.1:8080/:226:25)'
+
             clearInterval(MusicHudTV.timer_update);
         }}
     }},
