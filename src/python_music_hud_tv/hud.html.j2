@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- NOTE: Throughout file we need to use double curly braces in place of singles  -->
 <html>
 <head>
 <html lang="en">
@@ -6,8 +7,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
     :root {{
-        --BG_COLOR: {config[background_color]};
-        --FG_COLOR: {config[foreground_color]}
+        --BG_COLOR: {config.background_color};
+        --FG_COLOR: {config.foreground_color}
     }}
 
     body {{
@@ -121,43 +122,43 @@
 <body><div max-width="100%">
     <table width="98%">
         <tr><td id="currentTitle" class="currentTitle">
-            <div id="currentTrackTime" class="currentTrackTime">{music_data[current_play_head_time_and_length_pretty]}</div>
-            <div id="currentTrackTitle" class="currentTrackTitle">{music_data[songs][current][title]}</div>
+            <div id="currentTrackTime" class="currentTrackTime">{music_data.current_play_head_time_and_length_pretty}</div>
+            <div id="currentTrackTitle" class="currentTrackTitle">{music_data.current.title}</div>
         </td></tr>
     </table>
     <table width="98%">
         <tr><td id="currentArtist" class="currentArtist">
-            {music_data[songs][current][artist]}
+            {music_data.current.artist}
         </td></tr>
         <tr><td id="currentDanceStyleHeader" class="currentDanceStyleHeader">
-            {page_data[current_dance_style_header]}
+            {page_data.current_dance_style_header}
         </td></tr>
         <tr><td id="currentDanceStyle" class="currentDanceStyle">
             <ul id="currentDanceStyleList" class="currentDanceStyleList">
-                {music_data[songs][current][comment]}
+                {music_data.current.comment}
             </ul>
         </td></tr>
     </table>
     <div id="bottom" class="bottom">
-        {page_data[next_divider]}
+        {page_data.next_divider}
         <table id="nextTable"" class="nextTable">
             <tr>
                 <td id="nextHeader" class="nextHeader">
-                    {page_data[next_header]}
+                    {page_data.next_header}
                 </td>
             </tr>
             <tr><td id="nextTitle" class="nextTitle">
-                {music_data[songs][next][title]} {music_data[songs][next_next][duration_pretty]}
+                {music_data.next.title} {music_data.next_next.duration_pretty}
             </td></tr>
             <tr><td id="nextArtist" class="nextArtist">
-                {music_data[songs][next][artist]}
+                {music_data.next.artist}
             </td></tr>
             <tr><td id="nextDanceStyleHeader"" class="nextDanceStyleHeader">
-                {page_data[next_dance_style_header]}
+                {page_data.next_dance_style_header}
             </td></tr>
             <tr><td id="nextDanceStyle" class="nextDanceStyle">
                 <ul id="nextDanceStyleList" class="nextDanceStyleList">
-                    {music_data[songs][next][comment]}
+                    {music_data.next.comment}
                 </ul>
             </td></tr>
         </table>
@@ -166,7 +167,7 @@
         <table id="nextNextTable"" class="nextNextTable">
             <tr>
                 <td id="nextNextTableTD">
-                    <div id="nextNextSong">{page_data[next_next_header]} {music_data[songs][next_next][title]} {music_data[songs][next_next][duration_pretty]} {music_data[songs][next_next][comment]}</div>
+                    <div id="nextNextSong">{page_data.next_next_header} {music_data.next_next.title} {music_data.next_next.duration_pretty} {music_data.next_next.comment}</div>
                 </td>
             </tr>
         </table>
@@ -175,11 +176,70 @@
 </div></body>
 
 <script>
-let UPS = 2;
+const UPS = 2;
 const UPDATE_INTERVAL = 1000 / UPS;
+
+//const MaxQueue = (concurrency, max_tasks) => {{
+//    let running = 0;
+//    const tasks = .;
+//
+//    return async (task) => {{
+//        if tasks.length >= max_tasks return;
+//
+//        tasks.push(task);
+//        if (running >= concurrency) return;
+//
+//        running = running + 1;
+//        while (tasks.length) {{
+//            try {{
+//                await tasks.shift()();
+//            }} catch(err) {{
+//                console.error(err);
+//            }}
+//        }}
+//        running = running - 1;
+//    }}
+//}}
+
+//==============================================================================
+class MaxQueue {{
+
+    //--------------------------------------------------------------------------
+    constructor(concurrency, max_tasks) {{
+        this.running = 0;
+        this.tasks = [];
+        this.concurrency = concurrency;
+        this.max_tasks = max_tasks;
+    }}
+
+    //--------------------------------------------------------------------------
+    async enqueue(task) {{
+        if (this.tasks.length >= this.max_tasks) return;
+
+        this.tasks.push(task)
+        if (this.running >= this.concurrency) return;
+
+        this.running = this.running + 1;
+        while (this.tasks.length > 0) {{
+            try {{
+                let task_to_run = this.tasks.shift()
+                await task_to_run();
+            }} catch(e) {{
+                console.error(e)
+            }}
+        }}
+        this.running = this.running - 1;
+    }}
+
+    //--------------------------------------------------------------------------
+    async push(task) {{
+        this.enqueue(task)
+    }}
+}}
 
 const MusicHudTV = {{
     "timer_update": null,
+    "fetch_queue": new MaxQueue(1, 4),
 
     "el_realTime": null,
 
@@ -223,7 +283,7 @@ const MusicHudTV = {{
     "update": function() {{
         MusicHudTV.updateClock();
 
-        void MusicHudTV.updateData().catch(err => console.error(err));
+        MusicHudTV.fetch_queue.enqueue(async () => void MusicHudTV.updateData().catch(err => console.error(err)));
     }},
     //-------------------------------------------------------------------------------
     "updateClock": function() {{
@@ -243,18 +303,18 @@ const MusicHudTV = {{
 
             const data = await response.json();
 
-            MusicHudTV.el_currentTrackTitle.innerHTML = data["music_data"]["songs"]["current"]["title"];
-            MusicHudTV.el_currentTrackTime.innerHTML = data["music_data"]["current_play_head_time_and_length_pretty"];
-            MusicHudTV.el_currentArtist.innerHTML = data["music_data"]["songs"]["current"]["artist"];
-            MusicHudTV.el_currentDanceStyleHeader.innerHTML = data["page_data"]["current_dance_style_header"];
-            MusicHudTV.el_currentDanceStyleList.innerHTML = data["music_data"]["songs"]["current"]["comment"];
+            MusicHudTV.el_currentTrackTitle.innerHTML = data.music_data.current.title;
+            MusicHudTV.el_currentTrackTime.innerHTML = data.music_data.current_play_head_time_and_length_pretty;
+            MusicHudTV.el_currentArtist.innerHTML = data.music_data.current.artist;
+            MusicHudTV.el_currentDanceStyleHeader.innerHTML = data.page_data.current_dance_style_header;
+            MusicHudTV.el_currentDanceStyleList.innerHTML = data.music_data.current.comment;
 
-            MusicHudTV.el_nextTitle.innerHTML = data["music_data"]["songs"]["next"]["title"] + " " + data["music_data"]["songs"]["next_next"]["duration_pretty"];
-            MusicHudTV.el_nextArtist.innerHTML = data["music_data"]["songs"]["next"]["artist"]
-            MusicHudTV.el_nextDanceStyleHeader.innerHTML = data["page_data"]["next_dance_style_header"]
-            MusicHudTV.el_nextDanceStyleList.innerHTML = data["music_data"]["songs"]["next"]["comment"]
+            MusicHudTV.el_nextTitle.innerHTML = data.music_data.next.title + " " + data.music_data.next_next.duration_pretty;
+            MusicHudTV.el_nextArtist.innerHTML = data.music_data.next.artist
+            MusicHudTV.el_nextDanceStyleHeader.innerHTML = data.page_data.next_dance_style_header
+            MusicHudTV.el_nextDanceStyleList.innerHTML = data.music_data.next.comment
 
-            MusicHudTV.el_nextNextSong.innerHTML = data["page_data"]["next_next_header"] + " " + data["music_data"]["songs"]["next_next"]["title"] + " " + data["music_data"]["songs"]["next_next"]["duration_pretty"] + " " + data["music_data"]["songs"]["next_next"]["comment"]
+            MusicHudTV.el_nextNextSong.innerHTML = data.page_data.next_next_header + " " + data.music_data.next_next.title + " " + data.music_data.next_next.duration_pretty + " " + data.music_data.next_next.comment
         }} catch (error) {{
             console.log(
                 "an error was thrown:\n" +

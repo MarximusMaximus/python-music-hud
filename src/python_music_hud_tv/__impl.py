@@ -22,7 +22,6 @@ logger_log = logger.log
 ################################################################################
 
 # TODO: worker pool for js fetch?
-# TODO: asyncio/thread for getting data from Music
 # TODO: asyncio http server?
 # TODO: move display logic from server side data to client side processing
 # TODO: render full config into page from server side rendering at page load
@@ -35,6 +34,10 @@ logger_log = logger.log
 
 from copy import (
     deepcopy                        as copy_deepcopy,
+)
+from dataclasses import (
+    asdict,                         # as asdict,
+    dataclass,                      # as dataclass,
 )
 from http import (
     HTTPStatus                      as http_HTTPStatus,
@@ -56,13 +59,16 @@ from pathlib import (
 from threading import (
     Thread                          as threading_Thread,
 )
-from urllib.parse import (
-    urlparse                        as urllib_parse_urlparse,
+from time import (
+    sleep                           as time_sleep,
 )
 from typing import (
     Any,
     # Type,
-    TypedDict,
+    # TypedDict,
+)
+from urllib.parse import (
+    urlparse                        as urllib_parse_urlparse,
 )
 
 #endregion stdlib
@@ -72,6 +78,7 @@ from typing import (
 #region third party
 
 from ScriptingBridge import SBApplication  # type: ignore[reportGeneralTypesIssues,import]  # pylint: disable=no-name-in-module,import-error  # noqa: E501,B950
+from Foundation import NSAutoreleasePool  # type: ignore[reportGeneralTypesIssues,import]  # pylint: disable=no-name-in-module,import-error  # noqa: E501,B950
 
 #endregion third party
 #===============================================================================
@@ -82,7 +89,8 @@ from ScriptingBridge import SBApplication  # type: ignore[reportGeneralTypesIssu
 ################################################################################
 #region Types
 
-class MusicHudConfig(TypedDict):
+@dataclass
+class MusicHudConfig:
     server_port: int
     event_title_html: str
     background_color: str
@@ -93,27 +101,27 @@ class MusicHudConfig(TypedDict):
     last_call_title: str
     last_dance_title: str
 
-class Track(TypedDict):
-    title: str
-    artist: str
-    duration_in_seconds: int
-    duration_pretty: str
-    grouping: str
-    comment: str
+@dataclass
+class Track:
+    title: str = ""
+    artist: str = ""
+    duration_in_seconds: int = 0
+    duration_pretty: str = ""
+    grouping: str = ""
+    comment: str = ""
 
-class _MusicData_Songs(TypedDict):
-    current: Track
-    next: Track
-    next_next: Track
-
-class MusicData(TypedDict):
+@dataclass
+class MusicData:
     current_play_head_time_in_seconds: int
     current_play_head_time_pretty: str
     current_play_head_time_and_length_pretty: str
     current_playlist_name: str
-    songs: _MusicData_Songs
+    current: Track
+    next: Track
+    next_next: Track
 
-class PageData(TypedDict):
+@dataclass
+class PageData:
     current_dance_style_header: str
     next_divider: str
     next_header: str
@@ -165,39 +173,63 @@ DEFAULT_CONFIG = MusicHudConfig(
     last_dance_title="(I've Had) The Time of My Life",
 )
 
-EMPTY_MUSIC_DATA: MusicData = {
+EMPTY_PAGE_DATA_DICT = {
+    "current_dance_style_header": "",
+    "next_divider": "",
+    "next_header": "",
+    "next_dance_style_header": "",
+    "next_next_header": "",
+    "real_time": "",
+}
+
+EMPTY_TRACK_DATA_DICT = {
+    "title": "",
+    "artist": "",
+    "duration_in_seconds": 0,
+    "duration_pretty": "",
+    "grouping": "",
+    "comment": "",
+}
+
+EMPTY_MUSIC_DATA_DICT = {
     "current_play_head_time_in_seconds": 0,
     "current_play_head_time_pretty": "",
     "current_play_head_time_and_length_pretty": "",
     "current_playlist_name": "",
-    "songs": {
-        "current": {
-            "title": "",
-            "artist": "",
-            "duration_in_seconds": 0,
-            "duration_pretty": "",
-            "grouping": "",
-            "comment": "",
-        },
-        "next": {
-            "title": "",
-            "artist": "",
-            "duration_in_seconds": 0,
-            "duration_pretty": "",
-            "grouping": "",
-            "comment": "",
-        },
-        "next_next": {
-            "title": "",
-            "artist": "",
-            "duration_in_seconds": 0,
-            "duration_pretty": "",
-            "grouping": "",
-            "comment": "",
-        },
-    },
+    "current": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
+    "next": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
+    "next_next": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
 }
-
+# EMPTY_MUSIC_DATA = MusicData(
+#     current_play_head_time_in_seconds=0,
+#     current_play_head_time_pretty="",
+#     current_play_head_time_and_length_pretty="",
+#     current_playlist_name="",
+#     current=Track(
+#         "",
+#         "",
+#         0,
+#         "",
+#         "",
+#         "",
+#     ),
+#     next=Track(
+#         "",
+#         "",
+#         0,
+#         "",
+#         "",
+#         "",
+#     ),
+#     next_next=Track(
+#         "",
+#         "",
+#         0,
+#         "",
+#         "",
+#         "",
+#     ),
+# )
 
 #endregion Constants
 ################################################################################
@@ -211,7 +243,7 @@ g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.app
 # ignore all unused arguments/variables in function
 # example:
 # def foo(arg1, arg2, arg3):
-#     if __ignore_unused_arguments is False:
+#     if g__ignore_unused_arguments__ is False:
 #         arg1 = arg1 # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
 #         arg2 = arg2 # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
 #     x = 5
@@ -220,7 +252,7 @@ g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.app
 # but arg3 and x do not
 # unfortunately the long ass disable comment is required for every single
 # argument to be ignored
-__ignore_unused_arguments: bool = True
+g__ignore_unused_arguments__: bool = True
 
 #endregion Globals
 ################################################################################
@@ -261,25 +293,35 @@ def getApp(name: str) -> Application:
 
 #-------------------------------------------------------------------------------
 def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
-    ret_track: Track = {
-        "title": "",
-        "artist": "",
-        "duration_in_seconds": 0,
-        "duration_pretty": "",
-        "grouping": "",
-        "comment": "",
-    }
+    # ret_track: Track = {
+    #     "title": "",
+    #     "artist": "",
+    #     "duration_in_seconds": 0,
+    #     "duration_pretty": "",
+    #     "grouping": "",
+    #     "comment": "",
+    # }
 
     if track and track.name():
         length = int(track.finish() - track.start())
-        ret_track = {
-            "title": str(track.name()),
-            "artist": str(track.artist()),
-            "duration_in_seconds": length,
-            "duration_pretty": durationInSecondsToPretty(length),
-            "grouping": str(track.grouping()),
-            "comment": str(track.comment()),
-        }
+        # ret_track = {
+        #     "title": str(track.name()),
+        #     "artist": str(track.artist()),
+        #     "duration_in_seconds": length,
+        #     "duration_pretty": durationInSecondsToPretty(length),
+        #     "grouping": str(track.grouping()),
+        #     "comment": str(track.comment()),
+        # }
+        ret_track = Track(
+            title=str(track.name()),
+            artist=str(track.artist()),
+            duration_in_seconds=length,
+            duration_pretty=durationInSecondsToPretty(length),
+            grouping=str(track.grouping()),
+            comment=str(track.comment()),
+        )
+    else:
+        ret_track = Track(**EMPTY_TRACK_DATA_DICT)  # type: ignore[arg-type]
 
     return ret_track
 
@@ -296,7 +338,7 @@ def appleMusicGetPlaylistName() -> str:
     ):
         app_apple_music_playlist = app_apple_music.currentPlaylist()
         if app_apple_music_playlist:
-            ret_name = app_apple_music_playlist.name()
+            ret_name = str(app_apple_music_playlist.name())
 
     return ret_name
 
@@ -311,12 +353,12 @@ def appleMusicGetCurrentPlayHeadTimeInSeconds() -> int:
         app_apple_music.isRunning() and
         app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
-        raw_time = app_apple_music.playerPosition()
+        raw_time = int(app_apple_music.playerPosition())
 
         # adjust raw_time by track start time b/c the track can start playing
         # from a time greater than 0, such as if skipping a long silence or intro
         current_track = g_app_apple_music.currentTrack()
-        current_start = current_track.start()
+        current_start = int(current_track.start())
 
         cooked_time = raw_time - current_start
         ret_time = max(cooked_time, 0)
@@ -387,7 +429,10 @@ def getMusicData() -> MusicData:
     TODO
     """
 
-    music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
+    pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
+
+    # music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
+    music_data = MusicData(**EMPTY_MUSIC_DATA_DICT)  # type: ignore[arg-type]
 
     if (
         g_app_apple_music is not None and
@@ -395,22 +440,24 @@ def getMusicData() -> MusicData:
         g_app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
         # logger.debug("getting info from Apple Music App")
-        music_data["songs"]["current"] = appleMusicGetCurrentTrack()
-        music_data["songs"]["next"] = appleMusicGetNextTrack()
-        music_data["songs"]["next_next"] = appleMusicGetNextTrack(offset=2)
-        music_data["current_play_head_time_in_seconds"] = \
+        music_data.current = appleMusicGetCurrentTrack()
+        music_data.next = appleMusicGetNextTrack()
+        music_data.next_next = appleMusicGetNextTrack(offset=2)
+        music_data.current_play_head_time_in_seconds = \
             appleMusicGetCurrentPlayHeadTimeInSeconds()
-        music_data["current_playlist_name"] = appleMusicGetPlaylistName()
+        music_data.current_playlist_name = appleMusicGetPlaylistName()
 
-        music_data["current_play_head_time_pretty"] = \
-            durationInSecondsToPretty(music_data["current_play_head_time_in_seconds"])
+        music_data.current_play_head_time_pretty = \
+            durationInSecondsToPretty(music_data.current_play_head_time_in_seconds)
 
-        music_data["current_play_head_time_and_length_pretty"] = (
-            f'{music_data["current_play_head_time_pretty"]}/' +
-            f'{music_data["songs"]["current"]["duration_pretty"]}'
+        music_data.current_play_head_time_and_length_pretty = (
+            f'{music_data.current_play_head_time_pretty}/' +
+            f'{music_data.current.duration_pretty}'
         )
     else:
         logger.debug("no music app playing")
+
+    del pool
 
     return music_data
 
@@ -454,7 +501,8 @@ class MusicHudServer():
     server_thread: threading_Thread | None = None
     music_data_thread: threading_Thread | None = None
     test_case: Any = None
-    music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
+    # music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
+    music_data: MusicData = MusicData(**EMPTY_MUSIC_DATA_DICT)  # type: ignore[arg-type]
 
     #---------------------------------------------------------------------------
     def __init__(
@@ -497,18 +545,32 @@ class MusicHudServer():
         )
         self.music_data_thread.start()
 
+        self.server_thread.join()
+        self.music_data_thread.join()
+
+        logger.debug("tearing down server")
+
     #---------------------------------------------------------------------------
     def musicDataThread(self) -> None:
         """
         _summary_
         """
-        logger.debug("musicDataThread started")
+
+        pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
+
+        logger.debug(msg="musicDataThread started")
 
         while self.keep_running:
             new_music_data = getMusicData()
             self.music_data = new_music_data
+            # TODO: rate limit to 1 per 500ms; takes variable length of time,
+            # so we cannot just sleep 0.5
+            time_sleep(0)
+            # os_sched_yield()
 
         logger.debug("musicDataThread stopped")
+
+        del pool
 
     #---------------------------------------------------------------------------
     def serverThread(self, handler_cls: Any) -> None:
@@ -516,22 +578,29 @@ class MusicHudServer():
         Function that is the server's thread's run loop.
         """  # noqa: D401
 
-        logger.debug("starting server")
+        pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
+
+        logger.debug("starting HTTP server")
 
         server = MusicHudHTTPServer(
-            server_address=("localhost", self.config["server_port"]),
+            server_address=("localhost", self.config.server_port),
             RequestHandlerClass=handler_cls,
             config=self.config,
             server=self,
         )
 
-        logger.debug("server started")
+        logger.debug("HTTP server started")
 
         while self.keep_running:
             server.handle_request()
+            # try to be nice to other threads
+            time_sleep(0)
+            # os_sched_yield()
         server.server_close()
 
-        logger.debug("server stopped")
+        logger.debug("HTTP server stopped")
+
+        del pool
 
     #---------------------------------------------------------------------------
     def stopServer(self) -> None:
@@ -540,8 +609,6 @@ class MusicHudServer():
         """
 
         self.keep_running = False
-        if self.server_thread is not None:
-            self.server_thread.join()
 
 #===============================================================================
 class MusicHudHTTPServer(http_server_HTTPServer):
@@ -567,6 +634,7 @@ class MusicHudHTTPServer(http_server_HTTPServer):
             config (MusicHudConfig | None, optional): Configuration settings object.
             Defaults to None.
         """
+
         super().__init__(*args, **kwargs)
         self.server = server
         if config is None:
@@ -589,22 +657,29 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         """
         TODO: write doc
         """
-        if __ignore_unused_arguments is False:
+
+        if g__ignore_unused_arguments__ is False:
             config = config  # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
+
+        self.server.server.stopServer()
+        self.send_response(200)
+        self.end_headers()
 
     #---------------------------------------------------------------------------
     def _do_get__root(self, config: MusicHudConfig) -> None:
         """
         _summary_
         """
-        page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
-            "current_dance_style_header": "",
-            "next_divider": "",
-            "next_header": "",
-            "next_dance_style_header": "",
-            "next_next_header": "",
-            "real_time": "",
-        }
+
+        # page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
+        #     "current_dance_style_header": "",
+        #     "next_divider": "",
+        #     "next_header": "",
+        #     "next_dance_style_header": "",
+        #     "next_next_header": "",
+        #     "real_time": "",
+        # }
+        page_data = PageData(**EMPTY_PAGE_DATA_DICT)
 
         current_playlist_name: str = ""
 
@@ -612,160 +687,160 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         # for the whole function; better? worse?
         music_data = copy_deepcopy(self.server.server.music_data)
 
-        if music_data["songs"]["next_next"]["title"] in config["secret_titles"]:
-            music_data["songs"]["next_next"]["title"] = "*****"
+        if music_data.next_next.title in config.secret_titles:
+            music_data.next_next.title = "*****"
         elif (
-            config["gap_silence_title"] in (
-                music_data["songs"]["next_next"]["title"],
-                music_data["songs"]["next"]["title"],
-                music_data["songs"]["current"]["title"],
+            config.gap_silence_title in (
+                music_data.next_next.title,
+                music_data.next.title,
+                music_data.current.title,
             )
         ):
-            music_data["songs"]["next_next"]["title"] = ""
-            music_data["songs"]["next_next"]["duration_pretty"] = ""
-            music_data["songs"]["next_next"]["comment"] = ""
+            music_data.next_next.title = ""
+            music_data.next_next.duration_pretty = ""
+            music_data.next_next.comment = ""
 
-        if music_data["songs"]["next"]["title"] in config["secret_titles"]:
-            music_data["songs"]["next"]["title"] = "*****"
-            music_data["songs"]["next"]["artist"] = "*****"
+        if music_data.next.title in config.secret_titles:
+            music_data.next.title = "*****"
+            music_data.next.artist = "*****"
         elif (
-            config["gap_silence_title"] in (
-                music_data["songs"]["next"]["title"],
-                music_data["songs"]["current"]["title"],
+            config.gap_silence_title in (
+                music_data.next.title,
+                music_data.current.title,
             )
         ):
-            music_data["songs"]["next"]["title"] = ""
-            music_data["songs"]["next"]["artist"] = ""
-            music_data["songs"]["next"]["duration_pretty"] = ""
-            music_data["songs"]["next"]["comment"] = ""
+            music_data.next.title = ""
+            music_data.next.artist = ""
+            music_data.next.duration_pretty = ""
+            music_data.next.comment = ""
 
         if (
-            music_data["songs"]["current"]["title"] ==
-            config["gap_silence_title"]
+            music_data.current.title ==
+            config.gap_silence_title
         ):
-            music_data["songs"]["current"]["title"] = ""
-            music_data["songs"]["current"]["artist"] = ""
-            music_data["songs"]["current"]["comment"] = ""
+            music_data.current.title = ""
+            music_data.current.artist = ""
+            music_data.current.comment = ""
 
         if (
-            music_data["songs"]["current"]["title"] in (
-                config["last_call_title"],
-                config["last_dance_title"],
+            music_data.current.title in (
+                config.last_call_title,
+                config.last_dance_title,
             )
         ):
-            music_data["songs"]["next"]["title"] = ""
-            music_data["songs"]["next"]["artist"] = ""
-            music_data["songs"]["next"]["duration_pretty"] = ""
-            music_data["songs"]["next"]["comment"] = ""
+            music_data.next.title = ""
+            music_data.next.artist = ""
+            music_data.next.duration_pretty = ""
+            music_data.next.comment = ""
 
-            music_data["songs"]["next_next"]["title"] = ""
-            music_data["songs"]["next_next"]["duration_pretty"] = ""
-            music_data["songs"]["next_next"]["comment"] = ""
+            music_data.next_next.title = ""
+            music_data.next_next.duration_pretty = ""
+            music_data.next_next.comment = ""
 
-            page_data["next_dance_style_header"] = ""
-            page_data["next_header"] = ""
-            page_data["next_next_header"] = ""
-            page_data["next_divider"] = "<hr>"
+            page_data.next_dance_style_header = ""
+            page_data.next_header = ""
+            page_data.next_next_header = ""
+            page_data.next_divider = "<hr>"
 
-        music_data["songs"]["current"]["comment"] = \
-            commentToStyle(music_data["songs"]["current"]["comment"])
+        music_data.current.comment = \
+            commentToStyle(music_data.current.comment)
 
-        if music_data["songs"]["current"]["title"]:
-            page_data["current_dance_style_header"] = "Dance Style Info:"
+        if music_data.current.title:
+            page_data.current_dance_style_header = "Dance Style Info:"
         else:
-            music_data["current_play_head_time_and_length_pretty"] = ""
+            music_data.current_play_head_time_and_length_pretty = ""
 
-        if music_data["songs"]["next"]["title"]:
-            music_data["songs"]["next"]["comment"] = \
-                commentToStyle(music_data["songs"]["next"]["comment"])
+        if music_data.next.title:
+            music_data.next.comment = \
+                commentToStyle(music_data.next.comment)
 
-            page_data["next_divider"] = "<hr>"
-            page_data["next_header"] = "Next Up:"
-            page_data["next_dance_style_header"] = "Dance Style Info:"
+            page_data.next_divider = "<hr>"
+            page_data.next_header = "Next Up:"
+            page_data.next_dance_style_header = "Dance Style Info:"
 
             if (
-                music_data["songs"]["next"]["title"] ==
-                config["last_dance_title"]
+                music_data.next.title ==
+                config.last_dance_title
             ):
-                page_data["next_header"] = "LAST DANCE:"
+                page_data.next_header = "LAST DANCE:"
 
-            if music_data["songs"]["next"]["artist"]:
-                music_data["songs"]["next"]["artist"] = (
-                    f'by {music_data["songs"]["next"]["artist"]}'
+            if music_data.next.artist:
+                music_data.next.artist = (
+                    f'by {music_data.next.artist}'
                 )
 
-        if music_data["songs"]["next_next"]["title"]:
-            music_data["songs"]["next_next"]["comment"] = \
-                commentToStyle(music_data["songs"]["next_next"]["comment"])
+        if music_data.next_next.title:
+            music_data.next_next.comment = \
+                commentToStyle(music_data.next_next.comment)
 
-            page_data["next_next_header"] = "Followed by:<br/>"
+            page_data.next_next_header = "Followed by:<br/>"
 
-        if music_data["songs"]["current"]["title"] == config["last_call_title"]:
-            music_data["songs"]["next"]["title"] = \
+        if music_data.current.title == config.last_call_title:
+            music_data.next.title = \
                 "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
         elif (
-            music_data["songs"]["current"]["title"] ==
-            config["last_dance_title"]
+            music_data.current.title ==
+            config.last_dance_title
         ):
-            music_data["songs"]["next"]["title"] = \
+            music_data.next.title = \
                 "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
 
-        current_playlist_name = music_data["current_playlist_name"]
+        current_playlist_name = music_data.current_playlist_name
         if (
-            not music_data["songs"]["current"]["title"] or
-            current_playlist_name not in config["display_songs_for_playlists"]
+            not music_data.current.title or
+            current_playlist_name not in config.display_songs_for_playlists
         ):
-            music_data["songs"]["next_next"]["title"] = \
-                music_data["songs"]["next"]["title"]
-            if not music_data["songs"]["next_next"]["title"]:
-                music_data["songs"]["next_next"]["title"] = ""
+            music_data.next_next.title = \
+                music_data.next.title
+            if not music_data.next_next.title:
+                music_data.next_next.title = ""
             else:
-                music_data["songs"]["next_next"]["title"] = \
-                    "Next: " + music_data["songs"]["next_next"]["title"]
-            music_data["songs"]["next"]["title"] = \
-                music_data["songs"]["current"]["title"]
-            if music_data["songs"]["next"]["title"]:
-                music_data["songs"]["next"]["title"] = (
+                music_data.next_next.title = \
+                    "Next: " + music_data.next_next.title
+            music_data.next.title = \
+                music_data.current.title
+            if music_data.next.title:
+                music_data.next.title = (
                     "<br/><br/><br/><br/><br/><br/><br/>Currently Playing:" +
-                    f'{music_data["songs"]["next"]["title"]}<br/>' +
-                    f'{music_data["songs"]["next_next"]["title"]}'
+                    f'{music_data.next.title}<br/>' +
+                    f'{music_data.next_next.title}'
                 )
             else:
-                music_data["songs"]["next"]["title"] = ""
-            music_data["songs"]["next_next"]["title"] = ""
+                music_data.next.title = ""
+            music_data.next_next.title = ""
 
-            music_data["songs"]["current"]["title"] = (
-                f'<div class="bigTitle"><br/>{config["event_title_html"]}</div>'
+            music_data.current.title = (
+                f'<div class="bigTitle"><br/>{config.event_title_html}</div>'
             )
 
-            music_data["songs"]["current"]["artist"] = ""
-            music_data["songs"]["current"]["comment"] = ""
+            music_data.current.artist = ""
+            music_data.current.comment = ""
 
-            music_data["current_play_head_time_and_length_pretty"] = ""
+            music_data.current_play_head_time_and_length_pretty = ""
 
-            music_data["songs"]["next"]["artist"] = ""
-            music_data["songs"]["next"]["duration_pretty"] = ""
-            music_data["songs"]["next"]["comment"] = ""
+            music_data.next.artist = ""
+            music_data.next.duration_pretty = ""
+            music_data.next.comment = ""
 
-            music_data["songs"]["next_next"]["title"] = ""
-            music_data["songs"]["next_next"]["duration_pretty"] = ""
-            music_data["songs"]["next_next"]["comment"] = ""
+            music_data.next_next.title = ""
+            music_data.next_next.duration_pretty = ""
+            music_data.next_next.comment = ""
 
-            page_data["current_dance_style_header"] = ""
-            page_data["next_dance_style_header"] = ""
-            page_data["next_divider"] = ""
-            page_data["next_header"] = ""
-            page_data["next_next_header"] = ""
+            page_data.current_dance_style_header = ""
+            page_data.next_dance_style_header = ""
+            page_data.next_divider = ""
+            page_data.next_header = ""
+            page_data.next_next_header = ""
         else:
-            music_data["songs"]["current"]["title"] = (
+            music_data.current.title = (
                 '<div class="title">' +
-                f'{music_data["songs"]["current"]["title"]}' +
+                f'{music_data.current.title}' +
                 "</div>"
             )
 
-        if music_data["songs"]["current"]["artist"]:
-            music_data["songs"]["current"]["artist"] = \
-                f'by {music_data["songs"]["current"]["artist"]}'
+        if music_data.current.artist:
+            music_data.current.artist = \
+                f'by {music_data.current.artist}'
 
         with (
             open(
@@ -785,14 +860,16 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
 
     #---------------------------------------------------------------------------
     def _do_get__data(self, config: MusicHudConfig) -> None:
-        page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
-            "current_dance_style_header": "",
-            "next_divider": "",
-            "next_header": "",
-            "next_dance_style_header": "",
-            "next_next_header": "",
-            "real_time": "",
-        }
+
+        # page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
+        #     "current_dance_style_header": "",
+        #     "next_divider": "",
+        #     "next_header": "",
+        #     "next_dance_style_header": "",
+        #     "next_next_header": "",
+        #     "real_time": "",
+        # }
+        page_data = PageData(**EMPTY_PAGE_DATA_DICT)
 
         current_playlist_name: str = ""
 
@@ -802,178 +879,178 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         # for the whole function; better? worse?
         music_data = copy_deepcopy(self.server.server.music_data)
 
-        if music_data["songs"]["next_next"]["title"] in config["secret_titles"]:
-            music_data["songs"]["next_next"]["title"] = "*****"
+        if music_data.next_next.title in config.secret_titles:
+            music_data.next_next.title = "*****"
         elif (
-            config["gap_silence_title"] in (
-                music_data["songs"]["next_next"]["title"],
-                music_data["songs"]["next"]["title"],
-                music_data["songs"]["current"]["title"],
+            config.gap_silence_title in (
+                music_data.next_next.title,
+                music_data.next.title,
+                music_data.current.title,
             )
         ):
-            music_data["songs"]["next_next"]["title"] = ""
-            music_data["songs"]["next_next"]["duration_pretty"] = ""
-            music_data["songs"]["next_next"]["comment"] = ""
+            music_data.next_next.title = ""
+            music_data.next_next.duration_pretty = ""
+            music_data.next_next.comment = ""
 
-        if music_data["songs"]["next"]["title"] in config["secret_titles"]:
-            music_data["songs"]["next"]["title"] = "*****"
-            music_data["songs"]["next"]["artist"] = "*****"
+        if music_data.next.title in config.secret_titles:
+            music_data.next.title = "*****"
+            music_data.next.artist = "*****"
         elif (
-            config["gap_silence_title"] in (
-                music_data["songs"]["next"]["title"],
-                music_data["songs"]["current"]["title"],
+            config.gap_silence_title in (
+                music_data.next.title,
+                music_data.current.title,
             )
         ):
-            music_data["songs"]["next"]["title"] = ""
-            music_data["songs"]["next"]["artist"] = ""
-            music_data["songs"]["next"]["duration_pretty"] = ""
-            music_data["songs"]["next"]["comment"] = ""
+            music_data.next.title = ""
+            music_data.next.artist = ""
+            music_data.next.duration_pretty = ""
+            music_data.next.comment = ""
 
         if (
-            music_data["songs"]["current"]["title"] ==
-            config["gap_silence_title"]
+            music_data.current.title ==
+            config.gap_silence_title
         ):
-            music_data["songs"]["current"]["title"] = ""
-            music_data["songs"]["current"]["artist"] = ""
-            music_data["songs"]["current"]["comment"] = ""
+            music_data.current.title = ""
+            music_data.current.artist = ""
+            music_data.current.comment = ""
 
         if (
-            music_data["songs"]["current"]["title"] in (
-                config["last_call_title"],
-                config["last_dance_title"],
+            music_data.current.title in (
+                config.last_call_title,
+                config.last_dance_title,
             )
         ):
-            music_data["songs"]["next"]["title"] = ""
-            music_data["songs"]["next"]["artist"] = ""
-            music_data["songs"]["next"]["duration_pretty"] = ""
-            music_data["songs"]["next"]["comment"] = ""
+            music_data.next.title = ""
+            music_data.next.artist = ""
+            music_data.next.duration_pretty = ""
+            music_data.next.comment = ""
 
-            music_data["songs"]["next_next"]["title"] = ""
-            music_data["songs"]["next_next"]["duration_pretty"] = ""
-            music_data["songs"]["next_next"]["comment"] = ""
+            music_data.next_next.title = ""
+            music_data.next_next.duration_pretty = ""
+            music_data.next_next.comment = ""
 
-            page_data["next_dance_style_header"] = ""
-            page_data["next_header"] = ""
-            page_data["next_next_header"] = ""
-            page_data["next_divider"] = "<hr>"
+            page_data.next_dance_style_header = ""
+            page_data.next_header = ""
+            page_data.next_next_header = ""
+            page_data.next_divider = "<hr>"
 
-        music_data["songs"]["current"]["comment"] = commentToStyle(
-            music_data["songs"]["current"]["comment"],
+        music_data.current.comment = commentToStyle(
+            music_data.current.comment,
         )
 
-        if music_data["songs"]["current"]["title"]:
-            page_data["current_dance_style_header"] = "Dance Style Info:"
+        if music_data.current.title:
+            page_data.current_dance_style_header = "Dance Style Info:"
         else:
-            music_data["current_play_head_time_and_length_pretty"] = ""
+            music_data.current_play_head_time_and_length_pretty = ""
 
-        if music_data["songs"]["next"]["title"]:
-            music_data["songs"]["next"]["comment"] = (
+        if music_data.next.title:
+            music_data.next.comment = (
                 commentToStyle(
-                    music_data["songs"]["next"]["comment"],
+                    music_data.next.comment,
                 )
             )
 
-            page_data["next_divider"] = "<hr>"
-            page_data["next_header"] = "Next Up:"
-            page_data["next_dance_style_header"] = "Dance Style Info:"
+            page_data.next_divider = "<hr>"
+            page_data.next_header = "Next Up:"
+            page_data.next_dance_style_header = "Dance Style Info:"
 
             if (
-                music_data["songs"]["next"]["title"] == \
-                    config["last_dance_title"]
+                music_data.next.title == \
+                    config.last_dance_title
             ):
-                page_data["next_header"] = "LAST DANCE:"
+                page_data.next_header = "LAST DANCE:"
 
-            if music_data["songs"]["next"]["artist"]:
-                music_data["songs"]["next"]["artist"] = (
-                    f'by {music_data["songs"]["next"]["artist"]}'
+            if music_data.next.artist:
+                music_data.next.artist = (
+                    f'by {music_data.next.artist}'
                 )
 
-        if music_data["songs"]["next_next"]["title"]:
-            music_data["songs"]["next_next"]["comment"] = (
+        if music_data.next_next.title:
+            music_data.next_next.comment = (
                 commentToStyle(
-                    music_data["songs"]["next_next"]["comment"],
+                    music_data.next_next.comment,
                 )
             )
 
-            page_data["next_next_header"] = "Followed by:<br/>"
+            page_data.next_next_header = "Followed by:<br/>"
 
         if (
-            music_data["songs"]["current"]["title"] == \
-                config["last_call_title"]
+            music_data.current.title == \
+                config.last_call_title
         ):
-            music_data["songs"]["next"]["title"] = (
+            music_data.next.title = (
                 "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
             )
         elif (
-            music_data["songs"]["current"]["title"] ==
-            config["last_dance_title"]
+            music_data.current.title ==
+            config.last_dance_title
         ):
-            music_data["songs"]["next"]["title"] = (
+            music_data.next.title = (
                 "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
             )
 
-        current_playlist_name = music_data["current_playlist_name"]
+        current_playlist_name = music_data.current_playlist_name
         if (
-            not music_data["songs"]["current"]["title"] or
-            current_playlist_name not in config["display_songs_for_playlists"]
+            not music_data.current.title or
+            current_playlist_name not in config.display_songs_for_playlists
         ):
-            music_data["songs"]["next_next"]["title"] = \
-                music_data["songs"]["next"]["title"]
+            music_data.next_next.title = \
+                music_data.next.title
 
-            if not music_data["songs"]["next_next"]["title"]:
-                music_data["songs"]["next_next"]["title"] = ""
+            if not music_data.next_next.title:
+                music_data.next_next.title = ""
             else:
-                music_data["songs"]["next_next"]["title"] = \
-                    "Next: " + music_data["songs"]["next_next"]["title"]
+                music_data.next_next.title = \
+                    "Next: " + music_data.next_next.title
 
-            music_data["songs"]["next"]["title"] = \
-                music_data["songs"]["current"]["title"]
+            music_data.next.title = \
+                music_data.current.title
 
-            if music_data["songs"]["next"]["title"]:
-                music_data["songs"]["next"]["title"] = (
+            if music_data.next.title:
+                music_data.next.title = (
                     "<br/><br/><br/><br/><br/><br/><br/>Currently Playing:" +
-                    f'{music_data["songs"]["next"]["title"]}<br/>' +
-                    f'{music_data["songs"]["next_next"]["title"]}'
+                    f'{music_data.next.title}<br/>' +
+                    f'{music_data.next_next.title}'
                 )
             else:
-                music_data["songs"]["next"]["title"] = ""
+                music_data.next.title = ""
 
-            music_data["songs"]["next_next"]["title"] = ""
+            music_data.next_next.title = ""
 
-            music_data["songs"]["current"]["title"] = (
-                f'<div class="bigTitle"><br/>{config["event_title_html"]}</div>'
+            music_data.current.title = (
+                f'<div class="bigTitle"><br/>{config.event_title_html}</div>'
             )
 
-            music_data["songs"]["current"]["artist"] = ""
-            music_data["songs"]["current"]["comment"] = ""
+            music_data.current.artist = ""
+            music_data.current.comment = ""
 
-            music_data["current_play_head_time_and_length_pretty"] = ""
+            music_data.current_play_head_time_and_length_pretty = ""
 
-            music_data["songs"]["next"]["artist"] = ""
-            music_data["songs"]["next"]["duration_pretty"] = ""
-            music_data["songs"]["next"]["comment"] = ""
+            music_data.next.artist = ""
+            music_data.next.duration_pretty = ""
+            music_data.next.comment = ""
 
-            music_data["songs"]["next_next"]["title"] = ""
-            music_data["songs"]["next_next"]["duration_pretty"] = ""
-            music_data["songs"]["next_next"]["comment"] = ""
+            music_data.next_next.title = ""
+            music_data.next_next.duration_pretty = ""
+            music_data.next_next.comment = ""
 
-            page_data["current_dance_style_header"] = ""
-            page_data["next_dance_style_header"] = ""
-            page_data["next_divider"] = ""
-            page_data["next_header"] = ""
-            page_data["next_next_header"] = ""
+            page_data.current_dance_style_header = ""
+            page_data.next_dance_style_header = ""
+            page_data.next_divider = ""
+            page_data.next_header = ""
+            page_data.next_next_header = ""
         else:
-            music_data["songs"]["current"]["title"] = (
-                f'{music_data["songs"]["current"]["title"]}'
+            music_data.current.title = (
+                f'{music_data.current.title}'
             )
 
-        if music_data["songs"]["current"]["artist"]:
-            music_data["songs"]["current"]["artist"] = (
-                f'by {music_data["songs"]["current"]["artist"]}'
+        if music_data.current.artist:
+            music_data.current.artist = (
+                f'by {music_data.current.artist}'
             )
 
-        data["music_data"] = music_data
-        data["page_data"] = page_data
+        data["music_data"] = asdict(music_data)
+        data["page_data"] = asdict(page_data)
 
         message = json_dumps(data)
 
@@ -989,6 +1066,8 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         """
         # pylint: disable=possibly-unused-variable
 
+        pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
+
         config: MusicHudConfig = self.server.config
 
         parsed_path = urllib_parse_urlparse(self.path)
@@ -999,22 +1078,20 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
             #...................................................................
             case "/STOP_SERVER":
                 self._do_get__stop_server(config)
-                return
 
             #...................................................................
             case "/":
                 self._do_get__root(config)
-                return
 
             case "/data":
                 self._do_get__data(config)
-                return
 
             #...................................................................
             case _:
                 self.send_response(404)
                 self.end_headers()
-                return
+
+        del pool
 
     #---------------------------------------------------------------------------
     def log_request(
@@ -1106,7 +1183,7 @@ def __main(argv: list[str]) -> int:
         int: return code
     """
     # ignore unused vars from func signature
-    if __ignore_unused_arguments is False:
+    if g__ignore_unused_arguments__ is False:
         argv = argv  # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
 
     logger_log(logging_FATAL, "This module should not be run directly.")

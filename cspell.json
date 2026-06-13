@@ -16,6 +16,7 @@
         "astextplain",
         "Autobuild",
         "automount",
+        "Autorelease",
         "autotools",
         "backticks",
         "baseenv",
