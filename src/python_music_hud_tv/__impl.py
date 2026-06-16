@@ -41,8 +41,8 @@ from copy import (
     deepcopy                        as copy_deepcopy,
 )
 from dataclasses import (
-    asdict,                         # as asdict,
-    dataclass,                      # as dataclass,
+    asdict,                         # as asdict,  # intentionally using short name
+    dataclass,                      # as dataclass,  # intentionally using short name
 )
 from http import (
     HTTPStatus                      as http_HTTPStatus,
@@ -68,9 +68,9 @@ from time import (
     sleep                           as time_sleep,
 )
 from typing import (
-    Any,
-    # Type,
-    # TypedDict,
+    Any,                            # as Any,  # intentionally using short name
+    # Type,                           # as Type,  # intentionally using short name
+    # TypedDict,                      # as TypedDict,  # intentionally using short name
 )
 from urllib.parse import (
     urlparse                        as urllib_parse_urlparse,
