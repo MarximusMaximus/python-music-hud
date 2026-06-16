@@ -21,10 +21,15 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: worker pool for js fetch?
-# TODO: asyncio http server?
-# TODO: move display logic from server side data to client side processing
 # TODO: render full config into page from server side rendering at page load
+# TODO: move display logic from server side data to client side processing
+# TODO: time offset fixing
+# TODO: animated time bar
+# TODO: static lyrics
+# TODO: timed by line lyrics
+# TODO: timed by word lyrics
+# TODO: asyncio http server?
+# TODO: websockets?
 
 ################################################################################
 #region Imports
