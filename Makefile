@@ -22,14 +22,14 @@ test-makefile:
 
 .PHONY:
 install:  ### setup user environment
-	./bootstrap.sh
+	./bootstrap.sh --use-miniforge-version "26.1.1-3"
 
 .PHONY:
 setup: install
 
 .PHONY:
 install-dev:  ### setup development environment
-	./bootstrap.sh --dev
+	./bootstrap.sh --dev --use-miniforge-version "26.1.1-3"
 
 .PHONY:
 setup-dev: install-dev
