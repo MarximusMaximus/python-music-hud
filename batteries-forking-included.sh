@@ -122,6 +122,11 @@ Global Flags:
                         install as a deployment
     +D, --no-deploy, --no-deployment
                         do not install as a deployment
+    --force-reinstall-conda
+                        force install and overwrite base conda install
+                        default: false
+    --no-force-reinstall-conda
+                        do not force install nor overwrite base conda install
 
 Global Options:
     * [=] denotes optional equals sign
@@ -138,6 +143,11 @@ Global Options:
     -P[=]PROJECT_BASE_NAME, --project-base-name[=]PROJECT_BASE_NAME
                         override to use specified project base name
                         default: basename of PROJECT_DIR
+    --use-miniforge-version[=]FORCE_REINSTALL_CONDA_MINIFORGE_VERSION
+                        Specifies specific version of miniforge to use for
+                        installing conda
+                        default: "latest"
+                        example: "26.1.1-3"
 
 Positional Arguments:
     NONE
@@ -3422,7 +3432,8 @@ bfi_dir=""; export bfi_dir
 dev_mode="${BFI_DEV_MODE:-false}"; export dev_mode
 dev_mode_unsticky=false
 deploy_mode=false; export deploy_mode
-
+force_reinstall_conda=false; export force_reinstall_conda
+use_miniforge_version="latest"; export use_miniforge_version
 
 #endregion Public Globals
 #===============================================================================
@@ -3662,6 +3673,42 @@ def; parse_args__common_doubledash() {
             call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t found project-dir= arg"
             call print_usage
             call log_error "\"--project-dir\" requires a non-empty option argument."
+            exit "${RET_ERROR_INVALID_ARGUMENT}"
+            ;;
+
+        --force-reinstall-conda)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__common_doubledash;\t found force-reinstall-conda arg"
+            force_reinstall_conda=true
+            ;;
+        --no-force-reinstall-conda)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__common_doubledash;\t found force-reinstall-conda arg"
+            force_reinstall_conda=false
+            ;;
+
+        --use-miniforge-version)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t found use-miniforge-version arg"
+            if [ -n "$2" ]; then
+                use_miniforge_version="$2"
+                call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t\t use_miniforge_version=%s" "${use_miniforge_version}"
+                shift
+                __parse_args_shift_by=$(( __parse_args_shift_by + 1 ))
+            else
+                call print_usage
+                call log_error "\"--use-miniforge-version\" requires a non-empty option argument."
+                exit "${RET_ERROR_INVALID_ARGUMENT}"
+            fi
+            ;;
+        --use-miniforge-version=?*)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t found use-miniforge-version=* arg"
+            use_miniforge_version="$1"
+            call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t\t use_miniforge_version=%s" "${use_miniforge_version}"
+            use_miniforge_version="$(command echo "${use_miniforge_version}" | cut -c 25-)"
+            call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t\t use_miniforge_version=%s" "${use_miniforge_version}"
+            ;;
+        --use-miniforge-version=)
+            call log_ultradebug "$(get_my_real_basename)::parse_args__bootstrap::while;\t found use-miniforge-version= arg"
+            call print_usage
+            call log_error "\"--use-miniforge-version\" requires a non-empty option argument."
             exit "${RET_ERROR_INVALID_ARGUMENT}"
             ;;
 
@@ -4416,8 +4463,7 @@ def; ensure_conda() {
             needs_conda_install=true
         fi
 
-
-        if [ "${needs_conda_install}" = false ]; then
+        if [ "${needs_conda_install}" = false ] && [ "${force_reinstall_conda}" = false ] ; then
             (
                 log_superdebug "$(which conda)"
                 log_superdebug "$(ls -alG "$(which conda)")"
@@ -4438,24 +4484,30 @@ def; ensure_conda() {
             fi
         fi
 
-        if [ "${needs_conda_install}" = false ]; then
+        if [ "${needs_conda_install}" = false ] && [ "${force_reinstall_conda}" = false ]; then
             conda_version_test=$("${CONDA_INSTALL_PATH}"/condabin/conda --version)
             log_superdebug "Conda Version: ${conda_version_test}"
             if [ "${conda_version_test}" = "" ]; then
                 call log_footer "Conda Version Could Not Be Determined, Likely Corrupt."
                 needs_conda_install=true
+                force_reinstall_conda=true
             else
                 conda_version_test=$("${CONDA_INSTALL_PATH}"/bin/conda --version)
                 log_superdebug "Conda Version: ${conda_version_test}"
                 if [ "${conda_version_test}" = "" ]; then
                     call log_footer "Conda Version Could Not Be Determined, Likely Corrupt."
                     needs_conda_install=true
+                    force_reinstall_conda=true
                 fi
             fi
         fi
 
-        if [ "${needs_conda_install}" = true ]; then
-            call log_header "Installing Conda..."
+        if [ "${needs_conda_install}" = true ] || [ "${force_reinstall_conda}" = true ]; then
+            if [ "${force_reinstall_conda}" = true ]; then
+                call log_header "Force (Re)Installing Conda..."
+            else
+                call log_header "Installing Conda..."
+            fi
 
             call ensure_my_tempdir_G
             ret=$?
@@ -4471,6 +4523,9 @@ def; ensure_conda() {
 
             file_to_download="Miniforge3-${CONDA_FORGE_PLATFORM}-${CONDA_FORGE_ARCH}.${CONDA_FORGE_EXT}"
             URL="https://github.com/conda-forge/miniforge/releases/latest/download/${file_to_download}"
+            if [ "${use_miniforge_version}" != "latest" ]; then
+                URL="https://github.com/conda-forge/miniforge/releases/download/${use_miniforge_version}/${file_to_download}"
+            fi
             conda_installer="${my_tempdir}/downloads/${file_to_download}"
 
             call download_url_to_path "${URL}" "${conda_installer}"
@@ -4492,6 +4547,11 @@ def; ensure_conda() {
             fi
 
             call log_info "Installing Conda with PREFIX='${CONDA_INSTALL_PATH}'"
+
+            if [ "${force_reinstall_conda}" = true ]; then
+                call safe_rm "/opt/conda/miniforge/_conda"
+                call safe_rm "/opt/conda/miniforge/lib"
+            fi
 
             call teetty_G "2>&1 CONDA_PATH_CONFLICT=clobber CONDA_ALWAYS_COPY=true \"${conda_installer}\" -b -f -p \"${CONDA_INSTALL_PATH}\""
             ret=$?
