@@ -21,7 +21,6 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: render full config into page from server side rendering at page load
 # TODO: move display logic from server side data to client side processing
 # TODO: time offset fixing
 # TODO: animated time bar
@@ -685,6 +684,8 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         #     "real_time": "",
         # }
         page_data = PageData(**EMPTY_PAGE_DATA_DICT)
+
+        config_json = json_dumps(asdict(config), indent=4)  # pyright: ignore[reportUnusedVariable]  # pylint: disable=possibly-unused-variable,unused-variable  # noqa: E501,W505,B950,F841
 
         current_playlist_name: str = ""
 
