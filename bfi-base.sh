@@ -2,6 +2,7 @@
 # shellcheck disable=SC2317,SC2329
 # disable shellcheck checking for unreachable code, b/c it doesn't understand
 # mshext's def and call keywords
+
 # "$_" undefined in POSIX, we only use it for specific shells
 # shellcheck disable=SC3028
 DOLLAR_UNDER="$_"
@@ -10,6 +11,8 @@ DOLLAR_UNDER="$_"
 BFI_VERSION="0.1.2.dev1"
 export BFI_VERSION
 
+# TODO: version string compare, ref: https://gist.github.com/akutz/4bf84cce21dfb49dd55ca19014e2668f
+# TODO: do not update bfi if version is newer
 # TODO: flag for not tracing marximus-shell-extensions extended preamble functions
 # TODO: flag for not tracing bfi-base functions
 
