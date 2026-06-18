@@ -116,7 +116,15 @@ remove-bfi: ### remove the bfi environment
 	rm -rf /opt/conda/miniforge/envs/python-music-hud-tv
 
 .PHONY:
-uninstall: sterilize remove-bfi
+uninstall: sterilize remove-bfi  ### uninstall everything we can EXCEPT base conda environment (for safety)
+
+.PHONY:
+remove-base-conda:  ### remove base conda environment (DANGER! May affect other BFI based projects!)
+	rm -rf /opt/conda/miniforge/_conda
+	rm -rf /opt/conda/miniforge/lib
+
+.PHONY:
+obliterate: sterilize remove-bfi remove-base-conda  ### remove everything (DANGER! May affect other BFI based Projects!)
 
 .PHONY:
 listtest: ### lists tests discovered
