@@ -17,6 +17,10 @@ DOLLAR_UNDER="$_"
 #region Usage Text
 
 usage_text__update=$(cat<<EOF
+Update included batteries-forking-included scripts.
+
+NOTE: Usually only git repo maintainers should use this.
+
 Usage:
     bfi-update.sh [flags|options]
 
@@ -69,6 +73,10 @@ EOF
 export usage_text__update
 
 usage_text__bootstrap=$(cat<<EOF
+Install or update the software from the git repo.
+
+NOTE: Does not git pull first.
+
 Usage:
     bootstrap.sh [flags|options] [subcommand]
 
