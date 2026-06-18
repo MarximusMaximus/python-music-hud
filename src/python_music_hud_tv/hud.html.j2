@@ -181,28 +181,6 @@ const UPDATE_INTERVAL = 1000 / UPS;
 
 const CONFIG = {config_json};
 
-//const MaxQueue = (concurrency, max_tasks) => {{
-//    let running = 0;
-//    const tasks = .;
-//
-//    return async (task) => {{
-//        if tasks.length >= max_tasks return;
-//
-//        tasks.push(task);
-//        if (running >= concurrency) return;
-//
-//        running = running + 1;
-//        while (tasks.length) {{
-//            try {{
-//                await tasks.shift()();
-//            }} catch(err) {{
-//                console.error(err);
-//            }}
-//        }}
-//        running = running - 1;
-//    }}
-//}}
-
 //==============================================================================
 class MaxQueue {{
 

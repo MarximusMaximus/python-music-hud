@@ -204,36 +204,6 @@ EMPTY_MUSIC_DATA_DICT = {
     "next": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
     "next_next": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
 }
-# EMPTY_MUSIC_DATA = MusicData(
-#     current_play_head_time_in_seconds=0,
-#     current_play_head_time_pretty="",
-#     current_play_head_time_and_length_pretty="",
-#     current_playlist_name="",
-#     current=Track(
-#         "",
-#         "",
-#         0,
-#         "",
-#         "",
-#         "",
-#     ),
-#     next=Track(
-#         "",
-#         "",
-#         0,
-#         "",
-#         "",
-#         "",
-#     ),
-#     next_next=Track(
-#         "",
-#         "",
-#         0,
-#         "",
-#         "",
-#         "",
-#     ),
-# )
 
 #endregion Constants
 ################################################################################
@@ -297,25 +267,9 @@ def getApp(name: str) -> Application:
 
 #-------------------------------------------------------------------------------
 def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
-    # ret_track: Track = {
-    #     "title": "",
-    #     "artist": "",
-    #     "duration_in_seconds": 0,
-    #     "duration_pretty": "",
-    #     "grouping": "",
-    #     "comment": "",
-    # }
 
     if track and track.name():
         length = int(track.finish() - track.start())
-        # ret_track = {
-        #     "title": str(track.name()),
-        #     "artist": str(track.artist()),
-        #     "duration_in_seconds": length,
-        #     "duration_pretty": durationInSecondsToPretty(length),
-        #     "grouping": str(track.grouping()),
-        #     "comment": str(track.comment()),
-        # }
         ret_track = Track(
             title=str(track.name()),
             artist=str(track.artist()),
@@ -435,7 +389,6 @@ def getMusicData() -> MusicData:
 
     pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
-    # music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
     music_data = MusicData(**EMPTY_MUSIC_DATA_DICT)  # type: ignore[arg-type]
 
     if (
@@ -675,14 +628,6 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         _summary_
         """
 
-        # page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
-        #     "current_dance_style_header": "",
-        #     "next_divider": "",
-        #     "next_header": "",
-        #     "next_dance_style_header": "",
-        #     "next_next_header": "",
-        #     "real_time": "",
-        # }
         page_data = PageData(**EMPTY_PAGE_DATA_DICT)
 
         config_json = json_dumps(asdict(config), indent=4)  # pyright: ignore[reportUnusedVariable]  # pylint: disable=possibly-unused-variable,unused-variable  # noqa: E501,W505,B950,F841
@@ -867,14 +812,6 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
     #---------------------------------------------------------------------------
     def _do_get__data(self, config: MusicHudConfig) -> None:
 
-        # page_data : PageData = {  # pyright: ignore[reportUnusedVariable]
-        #     "current_dance_style_header": "",
-        #     "next_divider": "",
-        #     "next_header": "",
-        #     "next_dance_style_header": "",
-        #     "next_next_header": "",
-        #     "real_time": "",
-        # }
         page_data = PageData(**EMPTY_PAGE_DATA_DICT)
 
         current_playlist_name: str = ""
