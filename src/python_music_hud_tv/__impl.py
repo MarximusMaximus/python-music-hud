@@ -463,8 +463,11 @@ class MusicHudServer():
     server_thread: threading_Thread | None = None
     music_data_thread: threading_Thread | None = None
     test_case: Any = None
-    # music_data: MusicData = copy_deepcopy(EMPTY_MUSIC_DATA)
-    music_data: MusicData = MusicData(**EMPTY_MUSIC_DATA_DICT)  # type: ignore[arg-type]
+    music_data_buffers: list[MusicData] = [
+        MusicData(**EMPTY_MUSIC_DATA_DICT),  # type: ignore[arg-type]
+        MusicData(**EMPTY_MUSIC_DATA_DICT),  # type: ignore[arg-type]
+    ]
+    music_data_buffer_presentation_index: int = 0
 
     #---------------------------------------------------------------------------
     def __init__(
@@ -524,7 +527,10 @@ class MusicHudServer():
 
         while self.keep_running:
             new_music_data = getMusicData()
-            self.music_data = new_music_data
+
+            buffer_index = (self.music_data_buffer_presentation_index + 1) % 2
+            self.music_data_buffers[buffer_index] = new_music_data
+            self.music_data_buffer_presentation_index = buffer_index
             # TODO: rate limit to 1 per 500ms; takes variable length of time,
             # so we cannot just sleep 0.5
             time_sleep(0)
@@ -668,9 +674,10 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
     ) -> None:
         data: dict[Any, Any] = {}
 
-        # GIL allows us to copy the whole data structure instead of locking it
-        # for the whole function; better? worse?
-        music_data = copy_deepcopy(self.server.server.music_data)
+        music_hud_server: MusicHudServer = self.server.server
+        music_data = music_hud_server.music_data_buffers[
+            music_hud_server.music_data_buffer_presentation_index
+        ]
 
         data["music_data"] = asdict(music_data)
 
