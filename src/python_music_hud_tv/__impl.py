@@ -633,14 +633,6 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         _summary_
         """
 
-        # page_data = PageData(**EMPTY_PAGE_DATA_DICT)
-
-        config_json = json_dumps(asdict(config), indent=4)  # pyright: ignore[reportUnusedVariable]  # pylint: disable=possibly-unused-variable,unused-variable  # noqa: E501,W505,B950,F841
-
-        # GIL allows us to copy the whole data structure instead of locking it
-        # for the whole function; better? worse?
-        music_data = copy_deepcopy(self.server.server.music_data)  # pyright: ignore[reportUnusedVariable]  # pylint: disable=possibly-unused-variable,unused-variable  # noqa: E501,W505,B950,F841
-
         with (
             open(
                 file=pathlib_Path(MY_DIR_FULLPATH + "/hud.html"),
