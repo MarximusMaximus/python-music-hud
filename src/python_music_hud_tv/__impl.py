@@ -97,6 +97,7 @@ from Foundation import NSAutoreleasePool  # type: ignore[reportGeneralTypesIssue
 @dataclass
 class MusicHudConfig:
     server_port: int
+    updates_per_second: int
     event_title_html: str
     background_color: str
     foreground_color: str
@@ -155,6 +156,7 @@ APPLE_MUSIC_STATE_STOPPED = 1800426352
 
 DEFAULT_CONFIG = MusicHudConfig(
     server_port=8080,
+    updates_per_second=2,
     event_title_html="Mark<br/>&<br/>Sherry<br/>Wedding",
     background_color="#6E6856",
     foreground_color="#1d1b16",

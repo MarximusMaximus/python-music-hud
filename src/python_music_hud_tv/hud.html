@@ -177,10 +177,6 @@
 </div></body>
 
 <script>
-const UPS = 2;
-const UPDATE_INTERVAL = 1000 / UPS;
-
-
 //==============================================================================
 class MaxQueue {
     // based upon https://charemza.name/blog/posts/javascript/async/javascript-queue-with-concurrency-limit/
@@ -287,9 +283,11 @@ const MusicHudTV = {
         document.documentElement.style.setProperty('--BG_COLOR', MusicHudTV.config.background_color);
         document.documentElement.style.setProperty('--FG_COLOR', MusicHudTV.config.foreground_color);
 
+        let update_interval = 1000 / MusicHudTV.config.updates_per_second;
+
         MusicHudTV.timer_update = setInterval(
             MusicHudTV.update,
-            UPDATE_INTERVAL,
+            update_interval,
         )
     },
     //------------------------------------------------------------------------------
