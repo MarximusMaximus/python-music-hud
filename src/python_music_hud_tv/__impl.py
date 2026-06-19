@@ -648,9 +648,9 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
                 encoding="utf8",
             )
         ) as f:
-            raw_message = f.read()
+            message = f.read()
 
-        message_bytes = raw_message.encode("utf8", errors="ignore")
+        message_bytes = message.encode("utf8", errors="ignore")
         self.send_response(200)
         self.end_headers()
         _ = self.wfile.write(message_bytes)
