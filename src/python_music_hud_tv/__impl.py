@@ -22,6 +22,7 @@ logger_log = logger.log
 ################################################################################
 
 # TODO: alter client side display from the janky divs we used to use
+# TODO: convert js MusicHudTV from singleton to class
 # TODO: time offset fixing
 # TODO: animated time bar
 # TODO: static lyrics
@@ -647,13 +648,19 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         ) as f:
             raw_message = f.read()
 
-        raw_message = raw_message.\
-            replace("{", "{{").\
-            replace("}", "}}").\
-            replace("%%(", "{").\
-            replace(")%%", "}")
+        message_bytes = raw_message.encode("utf8", errors="ignore")
+        self.send_response(200)
+        self.end_headers()
+        _ = self.wfile.write(message_bytes)
 
-        message = raw_message.format_map({**globals(), **locals()})
+    #---------------------------------------------------------------------------
+    def _do_get__config(self, config: MusicHudConfig) -> None:
+
+        data: dict[Any, Any] = {}
+
+        data["config"] = asdict(config)
+
+        message = json_dumps(data)
 
         message_bytes = message.encode("utf8", errors="ignore")
         self.send_response(200)
@@ -705,6 +712,11 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
             case "/":
                 self._do_get__root(config)
 
+            #...................................................................
+            case "/config":
+                self._do_get__config(config)
+
+            #...................................................................
             case "/data":
                 self._do_get__data(config)
 

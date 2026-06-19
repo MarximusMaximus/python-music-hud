@@ -3,9 +3,9 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-    :root {
-        --BG_COLOR: %%(config.background_color)%%;
-        --FG_COLOR: %%(config.foreground_color)%%;
+    html {
+        --BG_COLOR: white;
+        --FG_COLOR: black;
     }
 
     body {
@@ -180,7 +180,6 @@
 const UPS = 2;
 const UPDATE_INTERVAL = 1000 / UPS;
 
-const CONFIG = %%(config_json)%%;
 
 //==============================================================================
 class MaxQueue {
@@ -234,6 +233,8 @@ class PageData {
 
 //==============================================================================
 const MusicHudTV = {
+    "config": {},
+
     "timer_update": null,
     "fetch_queue": new MaxQueue(1, 4),
 
@@ -255,7 +256,7 @@ const MusicHudTV = {
     "page_data_next_divider": null,
 
     //-------------------------------------------------------------------------------
-    "_initialize": function() {
+    "_initialize": async function() {
         MusicHudTV.el_realTime = document.getElementById("realTime");
 
         MusicHudTV.el_currentTrackTitle = document.getElementById("currentTrackTitle");
@@ -273,13 +274,25 @@ const MusicHudTV = {
 
         MusicHudTV.page_data_next_divider = document.getElementById("page_data_next_divider");
 
+        response = await fetch("/config");
+
+        if (!response.ok) {
+            console.log("HTTP Error:", response.status);
+            return;
+        }
+
+        data = await response.json();
+        MusicHudTV.config = data["config"];
+
+        document.documentElement.style.setProperty('--BG_COLOR', MusicHudTV.config.background_color);
+        document.documentElement.style.setProperty('--FG_COLOR', MusicHudTV.config.foreground_color);
+
         MusicHudTV.timer_update = setInterval(
             MusicHudTV.update,
             UPDATE_INTERVAL,
         )
-
     },
-    //-------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
     "commentToStyle": function(comment) {
         if (
             comment === null ||
@@ -329,28 +342,28 @@ const MusicHudTV = {
             const data = await response.json();
             data.page_data = new PageData();
 
-            if ( CONFIG.secret_titles.includes(data.music_data.next_next.title) ) {
+            if ( MusicHudTV.config.secret_titles.includes(data.music_data.next_next.title) ) {
                 data.music_data.next_next.title = "*****";
             } else if (
                 [
                     data.music_data.next_next.title,
                     data.music_data.next.title,
                     data.music_data.current.title,
-                ].includes(CONFIG.gap_silence_title)
+                ].includes(MusicHudTV.config.gap_silence_title)
             ) {
                 data.music_data.next_next.title = "";
                 data.music_data.next_next.duration_pretty = "";
                 data.music_data.next_next.comment = "";
             }
 
-            if ( CONFIG.secret_titles.includes(data.music_data.next.title) ) {
+            if ( MusicHudTV.config.secret_titles.includes(data.music_data.next.title) ) {
                 data.music_data.next.title = "*****";
                 data.music_data.next.artist = "*****";
             } else if (
                 [
                     data.music_data.next.title,
                     data.music_data.current.title,
-                ].includes(CONFIG.gap_silence_title)
+                ].includes(MusicHudTV.config.gap_silence_title)
             ) {
                 data.music_data.next.title = "";
                 data.music_data.next.artist = "";
@@ -360,7 +373,7 @@ const MusicHudTV = {
 
             if (
                 data.music_data.current.title ==
-                CONFIG.gap_silence_title
+                MusicHudTV.config.gap_silence_title
             ) {
                 data.music_data.current.title = "";
                 data.music_data.current.artist = "";
@@ -369,8 +382,8 @@ const MusicHudTV = {
 
             if (
                 [
-                    CONFIG.last_call_title,
-                    CONFIG.last_dance_title,
+                    MusicHudTV.config.last_call_title,
+                    MusicHudTV.config.last_dance_title,
                 ].includes(data.music_data.current.title)
             ) {
                 data.music_data.next.title = "";
@@ -415,7 +428,7 @@ const MusicHudTV = {
 
                 if (
                     data.music_data.next.title ==
-                    CONFIG.last_dance_title
+                    MusicHudTV.config.last_dance_title
                 ) {
                     data.page_data.next_header = "LAST DANCE:";
                 }
@@ -443,13 +456,13 @@ const MusicHudTV = {
             }
 
             if (
-                data.music_data.current.title == CONFIG.last_call_title
+                data.music_data.current.title == MusicHudTV.config.last_call_title
             ) {
                 data.music_data.next.title = (
                     "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
                 );
             } else if (
-                data.music_data.current.title == CONFIG.last_dance_title
+                data.music_data.current.title == MusicHudTV.config.last_dance_title
             ) {
                 data.music_data.next.title = (
                     "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
@@ -460,7 +473,7 @@ const MusicHudTV = {
             if (
                 data.music_data.current.title === null ||
                 data.music_data.current.title == "" ||
-                CONFIG.display_songs_for_playlists.includes(current_playlist_name) == false
+                MusicHudTV.config.display_songs_for_playlists.includes(current_playlist_name) == false
             ) {
                 data.music_data.next_next.title = data.music_data.next.title;
 
@@ -492,7 +505,7 @@ const MusicHudTV = {
                 data.music_data.next_next.title = "";
 
                 data.music_data.current.title = (
-                    '<div class="bigTitle"><br/>' + CONFIG.event_title_html + '</div>'
+                    '<div class="bigTitle"><br/>' + MusicHudTV.config.event_title_html + '</div>'
                 );
 
                 data.music_data.current.artist = "";
