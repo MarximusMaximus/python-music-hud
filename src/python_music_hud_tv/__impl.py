@@ -614,21 +614,18 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
     #---------------------------------------------------------------------------
     def _do_get__stop_server(
         self,
-        config: MusicHudConfig,
     ) -> None:
         """
         TODO: write doc
         """
-
-        if g__ignore_unused_arguments__ is False:
-            config = config  # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
-
         self.server.server.stopServer()
         self.send_response(200)
         self.end_headers()
 
     #---------------------------------------------------------------------------
-    def _do_get__root(self, config: MusicHudConfig) -> None:
+    def _do_get__root(
+        self,
+    ) -> None:
         """
         _summary_
         """
@@ -648,9 +645,13 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         _ = self.wfile.write(message_bytes)
 
     #---------------------------------------------------------------------------
-    def _do_get__config(self, config: MusicHudConfig) -> None:
+    def _do_get__config(
+        self,
+    ) -> None:
 
         data: dict[Any, Any] = {}
+
+        config: MusicHudConfig = self.server.config
 
         data["config"] = asdict(config)
 
@@ -662,11 +663,9 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         _ = self.wfile.write(message_bytes)
 
     #---------------------------------------------------------------------------
-    def _do_get__data(self, config: MusicHudConfig) -> None:
-
-        if g__ignore_unused_arguments__ is False:
-            config = config  # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
-
+    def _do_get__data(
+        self,
+    ) -> None:
         data: dict[Any, Any] = {}
 
         # GIL allows us to copy the whole data structure instead of locking it
@@ -691,8 +690,6 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
 
         pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
-        config: MusicHudConfig = self.server.config
-
         parsed_path = urllib_parse_urlparse(self.path)
         real_path = parsed_path.path
         # headers = self.headers
@@ -700,19 +697,19 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         match real_path:
             #...................................................................
             case "/STOP_SERVER":
-                self._do_get__stop_server(config)
+                self._do_get__stop_server()
 
             #...................................................................
             case "/":
-                self._do_get__root(config)
+                self._do_get__root()
 
             #...................................................................
             case "/config":
-                self._do_get__config(config)
+                self._do_get__config()
 
             #...................................................................
             case "/data":
-                self._do_get__data(config)
+                self._do_get__data()
 
             #...................................................................
             case _:
