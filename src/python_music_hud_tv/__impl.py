@@ -666,10 +666,6 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         if g__ignore_unused_arguments__ is False:
             config = config  # type: ignore[unreachable] # pylint: disable=self-assigning-variable,line-too-long  # noqa: E501,B950,W505
 
-        # page_data = PageData(**EMPTY_PAGE_DATA_DICT)
-
-        # current_playlist_name: str = ""
-
         data: dict[Any, Any] = {}
 
         # GIL allows us to copy the whole data structure instead of locking it
@@ -677,7 +673,6 @@ class MusicHudHTTPRequestHandler(http_server_BaseHTTPRequestHandler):
         music_data = copy_deepcopy(self.server.server.music_data)
 
         data["music_data"] = asdict(music_data)
-        # data["page_data"] = asdict(page_data)
 
         message = json_dumps(data)
 
