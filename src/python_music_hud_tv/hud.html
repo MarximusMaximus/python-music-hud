@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<!-- NOTE: Throughout file we need to use double curly braces in place of singles  -->
+<html>
+<head>
+<html lang="en">
+<!--<meta http-equiv="refresh" content="1" />-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style>
+    :root {
+        --BG_COLOR: %%(config.background_color)%%;
+        --FG_COLOR: %%(config.foreground_color)%%;
+    }
+
+    body {
+        font-family: Big Caslon, -system, -system-font, Arial;
+        background-color: var(--BG_COLOR);
+        color: var(--FG_COLOR);
+        overflow: hidden;
+    }
+
+    body table {
+        margin: 0;
+        margin-left: 1%;
+        margin-right: 1%;
+    }
+
+    ul {
+        -webkit-column-count: 2;
+        column-count: 2;
+        margin: 0;
+        margin-left: 0.5em;
+    }
+
+    li {
+        margin-left: 0.5em;
+    }
+
+    hr {
+        border: 1px;
+        border-style: solid;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .bottom {
+        position: absolute;
+        top: 600px;
+        width: 1900px;
+    }
+    .bottomRight {
+        position: absolute;
+        top: 646px;
+        left: 1000px;
+        width: 800px;
+    }
+
+    .currentTitle {
+        font-size: 4vw;
+    }
+    .currentTitle div.currentTrackTitle {
+        width: 68%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .currentTitle div.currentTrackTime {
+        position: absolute;
+        top: 1%;
+        right: 1%;
+    }
+    .currentArtist {
+        font-size: 2vw;
+        color: color-mix(in srgb, var(--FG_COLOR) 80%, transparent);
+    }
+    .currentDanceStyleHeader {
+        font-size: 2vw;
+        color: color-mix(in srgb, var(--FG_COLOR) 80%, transparent);
+    }
+    .currentDanceStyle {
+        font-size: 4.2vw;
+    }
+
+    table.nextTable {
+        color: color-mix(in srgb, var(--FG_COLOR) 70%, transparent);
+    }
+
+    table.nextNextTable {
+        font-size: 1.5vw;
+        color: color-mix(in srgb, var(--FG_COLOR) 70%, transparent);
+    }
+
+    .nextHeader {
+        font-size: 2.5vw;
+    }
+    .nextTitle {
+        font-size: 2vw;
+    }
+    .nextArtist {
+        font-size: 1.5vw;
+    }
+    .nextDanceStyleHeader {
+        font-size: 1.5vw;
+    }
+    .nextDanceStyle {
+        font-size: 2vw;
+    }
+
+    div.realTime {
+        position: absolute;
+        bottom: 1%;
+        right: 1%;
+        font-size: 4vw;
+        color: color-mix(in srgb, var(--FG_COLOR) 40%, transparent);
+    }
+
+    div.bigTitle {
+        font-size: 7.5vw;
+        text-align: center;
+        width: 100%;
+    }
+</style>
+</head>
+<body><div max-width="100%">
+    <table width="98%">
+        <tr><td id="currentTitle" class="currentTitle">
+            <div id="currentTrackTime" class="currentTrackTime"><!-- music_data.current_play_head_time_and_length_pretty --></div>
+            <div id="currentTrackTitle" class="currentTrackTitle"><!-- music_data.current.title --></div>
+        </td></tr>
+    </table>
+    <table width="98%">
+        <tr><td id="currentArtist" class="currentArtist">
+            <!-- music_data.current.artist -->
+        </td></tr>
+        <tr><td id="currentDanceStyleHeader" class="currentDanceStyleHeader">
+            <!-- page_data.current_dance_style_header -->
+        </td></tr>
+        <tr><td id="currentDanceStyle" class="currentDanceStyle">
+            <ul id="currentDanceStyleList" class="currentDanceStyleList">
+                <!-- music_data.current.comment -->
+            </ul>
+        </td></tr>
+    </table>
+    <div id="bottom" class="bottom">
+        <div id="page_data_next_divider">
+            <!-- page_data.next_divider -->
+        </div>
+        <table id="nextTable"" class="nextTable">
+            <tr>
+                <td id="nextHeader" class="nextHeader">
+                    <!-- page_data.next_header -->
+                </td>
+            </tr>
+            <tr><td id="nextTitle" class="nextTitle">
+                <!-- music_data.next.title music_data.next_next.duration_pretty -->
+            </td></tr>
+            <tr><td id="nextArtist" class="nextArtist">
+                <!-- music_data.next.artist -->
+            </td></tr>
+            <tr><td id="nextDanceStyleHeader"" class="nextDanceStyleHeader">
+                <!-- page_data.next_dance_style_header -->
+            </td></tr>
+            <tr><td id="nextDanceStyle" class="nextDanceStyle">
+                <ul id="nextDanceStyleList" class="nextDanceStyleList">
+                    <!-- music_data.next.comment -->
+                </ul>
+            </td></tr>
+        </table>
+    </div>
+    <div id="bottomRight" class="bottomRight">
+        <table id="nextNextTable" class="nextNextTable">
+            <tr>
+                <td id="nextNextTableTD">
+                    <div id="nextNextSong"><!-- page_data.next_next_header music_data.next_next.title music_data.next_next.duration_pretty music_data.next_next.comment --></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="realTime" class="realTime"></div>
+</div></body>
+
+<script>
+const UPS = 2;
+const UPDATE_INTERVAL = 1000 / UPS;
+
+const CONFIG = %%(config_json)%%;
+
+//==============================================================================
+class MaxQueue {
+    // based upon https://charemza.name/blog/posts/javascript/async/javascript-queue-with-concurrency-limit/
+
+    //--------------------------------------------------------------------------
+    constructor(concurrency, max_tasks) {
+        this.running = 0;
+        this.tasks = [];
+        this.concurrency = concurrency;
+        this.max_tasks = max_tasks;
+    }
+
+    //--------------------------------------------------------------------------
+    async enqueue(task) {
+        if (this.tasks.length >= this.max_tasks) return;
+
+        this.tasks.push(task)
+        if (this.running >= this.concurrency) return;
+
+        this.running = this.running + 1;
+        while (this.tasks.length > 0) {
+            try {
+                let task_to_run = this.tasks.shift()
+                await task_to_run();
+            } catch(e) {
+                console.error(e)
+            }
+        }
+        this.running = this.running - 1;
+    }
+
+    //--------------------------------------------------------------------------
+    async push(task) {
+        this.enqueue(task)
+    }
+}
+
+//==============================================================================
+class PageData {
+    //--------------------------------------------------------------------------
+    constructor() {
+        this.current_dance_style_header = "";
+        this.next_divider = "";
+        this.next_header = "";
+        this.next_dance_style_header = "";
+        this.next_next_header = "";
+        this.real_time = "";
+    }
+}
+
+//==============================================================================
+const MusicHudTV = {
+    "timer_update": null,
+    "fetch_queue": new MaxQueue(1, 4),
+
+    "el_realTime": null,
+
+    "el_currentTrackTitle": null,
+    "el_currentArtist": null,
+    "el_currentTrackTime": null,
+    "el_currentDanceStyleHeader": null,
+    "el_currentDanceStyle": null,
+
+    "el_nextTitle": null,
+    "el_nextArtist": null,
+    "el_nextDanceStyleHeader": null,
+    "el_nextDanceStyle": null,
+
+    "el_nextNextSong": null,
+
+    "page_data_next_divider": null,
+
+    //-------------------------------------------------------------------------------
+    "_initialize": function() {
+        MusicHudTV.el_realTime = document.getElementById("realTime");
+
+        MusicHudTV.el_currentTrackTitle = document.getElementById("currentTrackTitle");
+        MusicHudTV.el_currentTrackTime = document.getElementById("currentTrackTime");
+        MusicHudTV.el_currentArtist = document.getElementById("currentArtist");
+        MusicHudTV.el_currentDanceStyleHeader = document.getElementById("currentDanceStyleHeader");
+        MusicHudTV.el_currentDanceStyleList = document.getElementById("currentDanceStyleList");
+
+        MusicHudTV.el_nextTitle = document.getElementById("nextTitle");
+        MusicHudTV.el_nextArtist = document.getElementById("nextArtist");
+        MusicHudTV.el_nextDanceStyleHeader = document.getElementById("nextDanceStyleHeader");
+        MusicHudTV.el_nextDanceStyleList = document.getElementById("nextDanceStyleList");
+
+        MusicHudTV.el_nextNextSong = document.getElementById("nextNextSong");
+
+        MusicHudTV.page_data_next_divider = document.getElementById("page_data_next_divider");
+
+        MusicHudTV.timer_update = setInterval(
+            MusicHudTV.update,
+            UPDATE_INTERVAL,
+        )
+
+    },
+    //-------------------------------------------------------------------------------
+    "commentToStyle": function(comment) {
+        if (
+            comment === null ||
+            comment === ""
+        ) {
+            return "";
+        }
+
+        comment = comment.split(";")[0]
+
+        comment = (
+            comment.
+                replaceAll("ECS", "East Coast Swing, Jitterbug").
+                replaceAll("WCS", "West Coast Swing")
+        )
+
+        ret = "";
+        if ( comment != "" ) {
+            ret = "<li>" + comment.replaceAll(",", "</li><li>") + "</li>";
+        }
+        ret += "<li>Whatever Feels Right</li>";
+
+        return ret;
+    },
+    //-------------------------------------------------------------------------------
+    "update": function() {
+        MusicHudTV.updateClock();
+
+        MusicHudTV.fetch_queue.enqueue(async () => void MusicHudTV.updateData().catch(err => console.error(err)));
+    },
+    //-------------------------------------------------------------------------------
+    "updateClock": function() {
+        let now = new Date();
+        let nowStr = now.toLocaleTimeString();
+        MusicHudTV.el_realTime.innerHTML = nowStr;
+    },
+    //------------------------------------------------------------------------------
+    "updateData": async function() {
+        try {
+            let response = await fetch("/data");
+
+            if (!response.ok) {
+                console.log("HTTP Error:", response.status);
+                return;
+            }
+
+            const data = await response.json();
+            data.page_data = new PageData();
+
+            if ( CONFIG.secret_titles.includes(data.music_data.next_next.title) ) {
+                data.music_data.next_next.title = "*****";
+            } else if (
+                [
+                    data.music_data.next_next.title,
+                    data.music_data.next.title,
+                    data.music_data.current.title,
+                ].includes(CONFIG.gap_silence_title)
+            ) {
+                data.music_data.next_next.title = "";
+                data.music_data.next_next.duration_pretty = "";
+                data.music_data.next_next.comment = "";
+            }
+
+            if ( CONFIG.secret_titles.includes(data.music_data.next.title) ) {
+                data.music_data.next.title = "*****";
+                data.music_data.next.artist = "*****";
+            } else if (
+                [
+                    data.music_data.next.title,
+                    data.music_data.current.title,
+                ].includes(CONFIG.gap_silence_title)
+            ) {
+                data.music_data.next.title = "";
+                data.music_data.next.artist = "";
+                data.music_data.next.duration_pretty = "";
+                data.music_data.next.comment = "";
+            }
+
+            if (
+                data.music_data.current.title ==
+                CONFIG.gap_silence_title
+            ) {
+                data.music_data.current.title = "";
+                data.music_data.current.artist = "";
+                data.music_data.current.comment = "";
+            }
+
+            if (
+                [
+                    CONFIG.last_call_title,
+                    CONFIG.last_dance_title,
+                ].includes(data.music_data.current.title)
+            ) {
+                data.music_data.next.title = "";
+                data.music_data.next.artist = "";
+                data.music_data.next.duration_pretty = "";
+                data.music_data.next.comment = "";
+
+                data.music_data.next_next.title = "";
+                data.music_data.next_next.duration_pretty = "";
+                data.music_data.next_next.comment = "";
+
+                data.page_data.next_dance_style_header = "";
+                data.page_data.next_header = "";
+                data.page_data.next_next_header = "";
+                data.page_data.next_divider = "<hr>";
+            }
+
+            data.music_data.current.comment = MusicHudTV.commentToStyle(
+                data.music_data.current.comment
+            );
+
+            if (
+                data.music_data.current.title !== null &&
+                data.music_data.current.title != ""
+            ) {
+                data.page_data.current_dance_style_header = "Dance Style Info:";
+            } else {
+                data.music_data.current_play_head_time_and_length_pretty = "";
+            }
+
+            if (
+                data.music_data.next.title !== null &&
+                data.music_data.next.title != ""
+            ) {
+                data.music_data.next.comment = MusicHudTV.commentToStyle(
+                    data.music_data.next.comment
+                );
+
+                data.page_data.next_divider = "<hr>";
+                data.page_data.next_header = "Next Up:";
+                data.page_data.next_dance_style_header = "Dance Style Info:";
+
+                if (
+                    data.music_data.next.title ==
+                    CONFIG.last_dance_title
+                ) {
+                    data.page_data.next_header = "LAST DANCE:";
+                }
+
+                if (
+                    data.music_data.next.artist !== null &&
+                    data.music_data.next.artist != ""
+                ) {
+                    data.music_data.next.artist = (
+                        "by" +
+                        data.music_data.next.artist
+                    );
+                }
+            }
+
+            if ((
+                data.music_data.next_next.title !== null &&
+                data.music_data.next_next.title != ""
+            )) {
+                data.music_data.next_next.comment = MusicHudTV.commentToStyle(
+                    data.music_data.next_next.comment
+                );
+
+                data.page_data.next_next_header = "Followed by:<br/>";
+            }
+
+            if (
+                data.music_data.current.title == CONFIG.last_call_title
+            ) {
+                data.music_data.next.title = (
+                    "<div class=\"bigTitle\">LAST CALL FOR ALCOHOL!</div>"
+                );
+            } else if (
+                data.music_data.current.title == CONFIG.last_dance_title
+            ) {
+                data.music_data.next.title = (
+                    "<div class=\"bigTitle\">THANK YOU FOR COMING!</div>"
+                );
+            }
+
+            current_playlist_name = data.music_data.current_playlist_name;
+            if (
+                data.music_data.current.title === null ||
+                data.music_data.current.title == "" ||
+                CONFIG.display_songs_for_playlists.includes(current_playlist_name) == false
+            ) {
+                data.music_data.next_next.title = data.music_data.next.title;
+
+                if (
+                    data.music_data.next_next.title === null ||
+                    data.music_data.next_next.title == ""
+                ) {
+                    data.music_data.next_next.title = "";
+                } else {
+                    data.music_data.next_next.title = (
+                        "Next: " + data.music_data.next_next.title
+                    );
+                }
+
+                data.music_data.next.title = data.music_data.current.title;
+
+                if (
+                    data.music_data.next.title !== null &&
+                    data.music_data.next.title != ""
+                ) {
+                    data.music_data.next.title = (
+                        "<br/><br/><br/><br/><br/><br/><br/>Currently Playing:" +
+                        data.music_data.next.title + '<br/>' +
+                        data.music_data.next_next.title
+                    );
+                } else {
+                    data.music_data.next.title = "";
+                }
+                data.music_data.next_next.title = "";
+
+                data.music_data.current.title = (
+                    '<div class="bigTitle"><br/>' + CONFIG.event_title_html + '</div>'
+                );
+
+                data.music_data.current.artist = "";
+                data.music_data.current.comment = "";
+
+                data.music_data.current_play_head_time_and_length_pretty = "";
+
+                data.music_data.next.artist = "";
+                data.music_data.next.duration_pretty = "";
+                data.music_data.next.comment = "";
+
+                data.music_data.next_next.title = "";
+                data.music_data.next_next.duration_pretty = "";
+                data.music_data.next_next.comment = "";
+
+                data.page_data.current_dance_style_header = "";
+                data.page_data.next_dance_style_header = "";
+                data.page_data.next_divider = "";
+                data.page_data.next_header = "";
+                data.page_data.next_next_header = "";
+            } else {
+                data.music_data.current.title = (
+                    '<div class="title">' +
+                    data.music_data.current.title +
+                    "</div>"
+                );
+            }
+
+            if (
+                data.music_data.current.artist !== null &&
+                data.music_data.current.artist != ""
+            ) {
+                data.music_data.current.artist = (
+                    'by' + data.music_data.current.artist
+                );
+            }
+
+            MusicHudTV.el_currentTrackTitle.innerHTML = data.music_data.current.title;
+            MusicHudTV.el_currentTrackTime.innerHTML = data.music_data.current_play_head_time_and_length_pretty;
+            MusicHudTV.el_currentArtist.innerHTML = data.music_data.current.artist;
+            MusicHudTV.el_currentDanceStyleHeader.innerHTML = data.page_data.current_dance_style_header;
+            MusicHudTV.el_currentDanceStyleList.innerHTML = data.music_data.current.comment;
+
+            MusicHudTV.el_nextTitle.innerHTML = data.music_data.next.title + " " + data.music_data.next_next.duration_pretty;
+            MusicHudTV.el_nextArtist.innerHTML = data.music_data.next.artist;
+            MusicHudTV.el_nextDanceStyleHeader.innerHTML = data.page_data.next_dance_style_header;
+            MusicHudTV.el_nextDanceStyleList.innerHTML = data.music_data.next.comment;
+
+            MusicHudTV.el_nextNextSong.innerHTML = data.page_data.next_next_header + " " + data.music_data.next_next.title + " " + data.music_data.next_next.duration_pretty + " <ul>" + data.music_data.next_next.comment + "</ul>";
+
+            MusicHudTV.page_data_next_divider.innerHTML = data.page_data.next_divider;
+        } catch (error) {
+            console.log(
+                "an error was thrown:\n" +
+                error + "\n" +
+                "name: '" + error.name + "'\n" +
+                "message: '" + error.message + "'\n'" +
+                "stack: '" + error.stack + "'"
+            );
+
+//(index):237  GET http://127.0.0.1:8080/data net::ERR_INSUFFICIENT_RESOURCES
+//updateData @ (index):237
+//update @ (index):226
+//(index):259 an error was thrown:
+//TypeError: Failed to fetch
+//name: 'TypeError'
+//message: 'Failed to fetch'
+//'stack: 'TypeError: Failed to fetch
+//    at Object.updateData ((index):237:34)
+//    at :8080/update (http://127.0.0.1:8080/:226:25)'
+
+            clearInterval(MusicHudTV.timer_update);
+        }
+    },
+}
+
+MusicHudTV._initialize();
+
+</script>
+
+</html>

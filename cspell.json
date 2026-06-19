@@ -95,6 +95,7 @@
         "ipynb",
         "isort",
         "jacoco",
+        "janky",
         "Jenkinsfile",
         "jspf",
         "jspx",
