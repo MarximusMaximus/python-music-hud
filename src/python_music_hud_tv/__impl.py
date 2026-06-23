@@ -21,7 +21,6 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: alter client side display from the janky divs we used to use
 # TODO: convert js MusicHudTV from singleton to class
 # TODO: time offset fixing
 # TODO: animated time bar
@@ -104,8 +103,7 @@ class MusicHudConfig:
     secret_titles: list[str]
     display_songs_for_playlists: list[str]
     gap_silence_title: str
-    last_call_title: str
-    last_dance_title: str
+    lower_third_message_songs: dict[str, str]
 
 @dataclass
 class Track:
@@ -157,7 +155,7 @@ APPLE_MUSIC_STATE_STOPPED = 1800426352
 DEFAULT_CONFIG = MusicHudConfig(
     server_port=8080,
     updates_per_second=2,
-    event_title_html="Mark<br/>&<br/>Sherry<br/>Wedding",
+    event_title_html="<br/>Mark<br/>&<br/>Sherry<br/>Wedding",
     background_color="#6E6856",
     foreground_color="#1d1b16",
     secret_titles=[
@@ -165,7 +163,6 @@ DEFAULT_CONFIG = MusicHudConfig(
         "Never Gonna Give You Up (7\" Mix)",
     ],
     display_songs_for_playlists=[
-        "SPOTIFY",
         "9 Pre Dance - 30m (6:30p)",
         "10 Main Dance - 1h (8p)",
         "11 Extra Dance - 1h (?)",
@@ -176,18 +173,12 @@ DEFAULT_CONFIG = MusicHudConfig(
         "5b Last Dances (10:45pm)",
     ],
     gap_silence_title="----- 30 Minutes of Silence -----",
-    last_call_title="Last Call (One Bourbon, One Scotch, One Beer)",
-    last_dance_title="(I've Had) The Time of My Life",
+    lower_third_message_songs={
+        "\"Last Call\" (One Bourbon, One Scotch, One Beer; Mark Cut)":
+            "LAST CALL FOR ALCOHOL!",
+        "(I've Had) The Time of My Life": "THANK YOU FOR COMING!",
+    },
 )
-
-EMPTY_PAGE_DATA_DICT = {
-    "current_dance_style_header": "",
-    "next_divider": "",
-    "next_header": "",
-    "next_dance_style_header": "",
-    "next_next_header": "",
-    "real_time": "",
-}
 
 EMPTY_TRACK_DATA_DICT = {
     "title": "",
