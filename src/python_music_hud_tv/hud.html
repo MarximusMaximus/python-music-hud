@@ -235,6 +235,7 @@
 </div></body>
 
 <script>
+"use strict";
 //==============================================================================
 class MaxQueue {
     // based upon https://charemza.name/blog/posts/javascript/async/javascript-queue-with-concurrency-limit/
@@ -273,92 +274,89 @@ class MaxQueue {
 }
 
 //==============================================================================
-const MusicHudTV = {
-    "config": {},
+class MusicHudTV {
 
-    "timer_update": null,
-    "fetch_queue": new MaxQueue(1, 4),
+    //--------------------------------------------------------------------------
+    constructor() {
+        if (
+            MusicHudTV._instance !== null &&
+            MusicHudTV._instance !== undefined
+        )
+        {
+            return MusicHudTV._instance;
+        }
+        MusicHudTV._instance = this;
 
-    "el_realTime": null,
+        this.config = {};
 
-    "el_title_card": null,
-    "el_title_card_title_text": null,
-    "el_title_card_song_info_current": null,
-    "el_title_card_song_info_next": null,
+        this.timer_update = null;
+        this.fetch_queue = new MaxQueue(1, 4);
 
-    "el_current_song": null,
-    "el_currentTrackTitle": null,
-    "el_currentArtist": null,
-    "el_currentTrackTime": null,
-    "el_currentDanceStyleHeader": null,
-    "el_currentDanceStyle": null,
+        this.el_realTime = document.getElementById("realTime");
 
-    "el_next_song": null,
-    "el_nextHeader": null,
-    "el_nextTitle": null,
-    "el_nextArtist": null,
-    "el_nextDanceStyleHeader": null,
-    "el_nextDanceStyle": null,
+        this.el_title_card = document.getElementById("title_card")
+        this.el_title_card_title_text = document.getElementById("title_card_title_text");
+        this.el_title_card_song_info_current = document.getElementById("title_card_song_info_current");
+        this.el_title_card_song_info_next = document.getElementById("title_card_song_info_next");
 
-    "el_next_next_song": null,
-    "el_nextNextSongText": null,
+        this.el_current_song = document.getElementById("current_song");
+        this.el_currentTrackTitle = document.getElementById("currentTrackTitle");
+        this.el_currentTrackTime = document.getElementById("currentTrackTime");
+        this.el_currentArtist = document.getElementById("currentArtist");
+        this.el_currentDanceStyleHeader = document.getElementById("currentDanceStyleHeader");
+        this.el_currentDanceStyleList = document.getElementById("currentDanceStyleList");
 
-    "el_lower_third_divider": null,
-    "el_lower_third_message": null,
-    "el_lower_third_message_text": null,
+        this.el_next_song = document.getElementById("next_song");
+        this.el_nextHeader = document.getElementById("nextHeader");
+        this.el_nextTitle = document.getElementById("nextTitle");
+        this.el_nextArtist = document.getElementById("nextArtist");
+        this.el_nextDanceStyleHeader = document.getElementById("nextDanceStyleHeader");
+        this.el_nextDanceStyleList = document.getElementById("nextDanceStyleList");
+
+        this.el_next_next_song = document.getElementById("next_next_song");
+        this.el_nextNextSongText = document.getElementById("nextNextSongText");
+
+        this.el_lower_third_divider = document.getElementById("lower_third_divider");
+        this.el_lower_third_message = document.getElementById("lower_third_message");
+        this.el_lower_third_message_text = document.getElementById("lower_third_message_text");
+    }
 
     //-------------------------------------------------------------------------------
-    "_initialize": async function() {
-        MusicHudTV.el_realTime = document.getElementById("realTime");
-
-        MusicHudTV.el_title_card = document.getElementById("title_card")
-        MusicHudTV.el_title_card_title_text = document.getElementById("title_card_title_text");
-        MusicHudTV.el_title_card_song_info_current = document.getElementById("title_card_song_info_current");
-        MusicHudTV.el_title_card_song_info_next = document.getElementById("title_card_song_info_next");
-
-        MusicHudTV.el_current_song = document.getElementById("current_song");
-        MusicHudTV.el_currentTrackTitle = document.getElementById("currentTrackTitle");
-        MusicHudTV.el_currentTrackTime = document.getElementById("currentTrackTime");
-        MusicHudTV.el_currentArtist = document.getElementById("currentArtist");
-        MusicHudTV.el_currentDanceStyleHeader = document.getElementById("currentDanceStyleHeader");
-        MusicHudTV.el_currentDanceStyleList = document.getElementById("currentDanceStyleList");
-
-        MusicHudTV.el_next_song = document.getElementById("next_song");
-        MusicHudTV.el_nextHeader = document.getElementById("nextHeader");
-        MusicHudTV.el_nextTitle = document.getElementById("nextTitle");
-        MusicHudTV.el_nextArtist = document.getElementById("nextArtist");
-        MusicHudTV.el_nextDanceStyleHeader = document.getElementById("nextDanceStyleHeader");
-        MusicHudTV.el_nextDanceStyleList = document.getElementById("nextDanceStyleList");
-
-        MusicHudTV.el_next_next_song = document.getElementById("next_next_song");
-        MusicHudTV.el_nextNextSongText = document.getElementById("nextNextSongText");
-
-        MusicHudTV.el_lower_third_divider = document.getElementById("lower_third_divider");
-        MusicHudTV.el_lower_third_message = document.getElementById("lower_third_message");
-        MusicHudTV.el_lower_third_message_text = document.getElementById("lower_third_message_text");
-
-        response = await fetch("/config");
+    async start() {
+        let response = await fetch("/config");
 
         if (!response.ok) {
             console.log("HTTP Error:", response.status);
             return;
         }
 
-        data = await response.json();
-        MusicHudTV.config = data["config"];
+        let data = await response.json();
+        this.config = data["config"];
 
-        document.documentElement.style.setProperty('--BG_COLOR', MusicHudTV.config.background_color);
-        document.documentElement.style.setProperty('--FG_COLOR', MusicHudTV.config.foreground_color);
+        document.documentElement.style.setProperty('--BG_COLOR', this.config.background_color);
+        document.documentElement.style.setProperty('--FG_COLOR', this.config.foreground_color);
 
-        let update_interval = 1000 / MusicHudTV.config.updates_per_second;
+        let update_interval = 1000 / this.config.updates_per_second;
 
-        MusicHudTV.timer_update = setInterval(
-            MusicHudTV.update,
+        this.timer_update = setInterval(
+            this.update,
             update_interval,
+            this,
         )
-    },
+    }
+
+    //-------------------------------------------------------------------------------
+    update(real_this) {
+        // NOTE: b/c this function is called via setInterval, 'this' object is
+        //       the window, so we pass in the real_this which is our object
+
+        real_this.updateClock();
+
+        real_this.fetch_queue.enqueue(async () => void real_this.updateData().catch(err => console.error(err)));
+    }
+
     //------------------------------------------------------------------------------
-    "commentToStyle": function(comment) {
+    commentToStyle(comment) {
         if (
             comment === null ||
             comment === ""
@@ -374,28 +372,24 @@ const MusicHudTV = {
                 replaceAll("WCS", "West Coast Swing")
         )
 
-        ret = "";
+        let ret = "";
         if ( comment != "" ) {
             ret = "<li>" + comment.replaceAll(",", "</li><li>") + "</li>";
         }
         ret += "<li>Whatever Feels Right</li>";
 
         return ret;
-    },
-    //-------------------------------------------------------------------------------
-    "update": function() {
-        MusicHudTV.updateClock();
+    }
 
-        MusicHudTV.fetch_queue.enqueue(async () => void MusicHudTV.updateData().catch(err => console.error(err)));
-    },
     //-------------------------------------------------------------------------------
-    "updateClock": function() {
+    updateClock() {
         let now = new Date();
         let nowStr = now.toLocaleTimeString();
-        MusicHudTV.el_realTime.innerHTML = nowStr;
-    },
+        this.el_realTime.innerHTML = nowStr;
+    }
+
     //------------------------------------------------------------------------------
-    "updateData": async function() {
+    async updateData() {
         try {
             let response = await fetch("/data");
 
@@ -425,14 +419,14 @@ const MusicHudTV = {
                 data.music_data.next_next.title != ""
             )
             {
-                if ( MusicHudTV.config.secret_titles.includes(
+                if ( this.config.secret_titles.includes(
                     data.music_data.next_next.title
                 ) ) {
                     data.music_data.next_next.title = "*****";
                     data.music_data.next_next.artist = "*****";
                 } else if (
                     data.music_data.next_next.title ==
-                    MusicHudTV.config.gap_silence_title
+                    this.config.gap_silence_title
                 ) {
                     data.music_data.next_next.title= "";
                     hide_next_next_song = true;
@@ -440,7 +434,7 @@ const MusicHudTV = {
             } else {
                 data.music_data.next_next.title = "";
             }
-            data.music_data.next_next.comment = MusicHudTV.commentToStyle(
+            data.music_data.next_next.comment = this.commentToStyle(
                 data.music_data.next_next.comment
             )
             //endregion next_next
@@ -455,13 +449,13 @@ const MusicHudTV = {
             {
                 if (
                     data.music_data.next.title ==
-                        MusicHudTV.config.gap_silence_title
+                        this.config.gap_silence_title
                 ) {
                     data.music_data.next.title = "";
                     hide_next_song = true;
                     data.music_data.next_next.title= "";
                     high_next_next_song = true;
-                } else if ( MusicHudTV.config.secret_titles.includes(
+                } else if ( this.config.secret_titles.includes(
                     data.music_data.next.title
                 ) ) {
                     data.music_data.next.title = "*****";
@@ -471,14 +465,14 @@ const MusicHudTV = {
                 next_header = "Next Up:";
                 if (
                     data.music_data.next.title ==
-                    MusicHudTV.config.last_dance_title
+                    this.config.last_dance_title
                 ) {
                     next_header = "LAST DANCE:";
                 }
             } else {
                 data.music_data.next.title = "";
             }
-            data.music_data.next.comment = MusicHudTV.commentToStyle(
+            data.music_data.next.comment = this.commentToStyle(
                 data.music_data.next.comment
             )
             //endregion next
@@ -493,7 +487,7 @@ const MusicHudTV = {
             {
                 if (
                     data.music_data.current.title ==
-                        MusicHudTV.config.gap_silence_title
+                        this.config.gap_silence_title
                 ) {
                     hide_title_card = false;
                     data.music_data.current.title = ""
@@ -504,14 +498,14 @@ const MusicHudTV = {
                     hide_next_next_song = true;
                 } else if (
                     Object.keys(
-                        MusicHudTV.config.lower_third_message_songs
+                        this.config.lower_third_message_songs
                     ).
                         includes(
                             data.music_data.current.title
                         )
                 ) {
                     lower_third_message_text =
-                        MusicHudTV.config.lower_third_message_songs[
+                        this.config.lower_third_message_songs[
                             data.music_data.current.title
                         ]
                     hide_lower_third_message = false;
@@ -521,7 +515,7 @@ const MusicHudTV = {
             } else {
                 data.music_data.current.title = ""
             }
-            data.music_data.current.comment = MusicHudTV.commentToStyle(
+            data.music_data.current.comment = this.commentToStyle(
                 data.music_data.current.comment
             )
             //region current
@@ -530,7 +524,7 @@ const MusicHudTV = {
             //..................................................................
             //region title card
             if (
-                MusicHudTV.config.display_songs_for_playlists.includes(
+                this.config.display_songs_for_playlists.includes(
                     data.music_data.current_playlist_name
                 ) == false
             ) {
@@ -565,54 +559,54 @@ const MusicHudTV = {
             //..................................................................
             //region display
             if ( hide_title_card ) {
-                MusicHudTV.el_title_card.style.setProperty("display", "none");
-                MusicHudTV.el_lower_third_divider.style.setProperty("display", "block");
-                MusicHudTV.el_current_song.style.setProperty("display", "block");
+                this.el_title_card.style.setProperty("display", "none");
+                this.el_lower_third_divider.style.setProperty("display", "block");
+                this.el_current_song.style.setProperty("display", "block");
             } else {
-                MusicHudTV.el_title_card.style.setProperty("display", "block");
-                MusicHudTV.el_lower_third_divider.style.setProperty("display", "none");
-                MusicHudTV.el_current_song.style.setProperty("display", "none");
+                this.el_title_card.style.setProperty("display", "block");
+                this.el_lower_third_divider.style.setProperty("display", "none");
+                this.el_current_song.style.setProperty("display", "none");
             }
 
             if ( hide_lower_third_message ) {
-                MusicHudTV.el_lower_third_message.style.setProperty("display", "none");
+                this.el_lower_third_message.style.setProperty("display", "none");
             } else {
-                MusicHudTV.el_lower_third_message.style.setProperty("display", "block");
+                this.el_lower_third_message.style.setProperty("display", "block");
             }
 
             if ( hide_next_song ) {
-                MusicHudTV.el_next_song.style.setProperty("display", "none");
+                this.el_next_song.style.setProperty("display", "none");
             } else {
-                MusicHudTV.el_next_song.style.setProperty("display", "block");
+                this.el_next_song.style.setProperty("display", "block");
             }
 
             if ( hide_next_next_song ) {
-                MusicHudTV.el_next_next_song.style.setProperty("display", "none");
+                this.el_next_next_song.style.setProperty("display", "none");
             } else {
-                MusicHudTV.el_next_next_song.style.setProperty("display", "block");
+                this.el_next_next_song.style.setProperty("display", "block");
             }
             //endregion display
             //..................................................................
 
             //..................................................................
             //region text
-            MusicHudTV.el_title_card_title_text.innerHTML = MusicHudTV.config.event_title_html;
-            MusicHudTV.el_title_card_song_info_current.innerHTML = data.music_data.current.title;
-            MusicHudTV.el_title_card_song_info_next.innerHTML = data.music_data.next.title;
+            this.el_title_card_title_text.innerHTML = this.config.event_title_html;
+            this.el_title_card_song_info_current.innerHTML = data.music_data.current.title;
+            this.el_title_card_song_info_next.innerHTML = data.music_data.next.title;
 
-            MusicHudTV.el_currentTrackTitle.innerHTML = data.music_data.current.title;
-            MusicHudTV.el_currentTrackTime.innerHTML = data.music_data.current_play_head_time_and_length_pretty;
-            MusicHudTV.el_currentArtist.innerHTML = data.music_data.current.artist;
-            MusicHudTV.el_currentDanceStyleList.innerHTML = data.music_data.current.comment;
+            this.el_currentTrackTitle.innerHTML = data.music_data.current.title;
+            this.el_currentTrackTime.innerHTML = data.music_data.current_play_head_time_and_length_pretty;
+            this.el_currentArtist.innerHTML = data.music_data.current.artist;
+            this.el_currentDanceStyleList.innerHTML = data.music_data.current.comment;
 
-            MusicHudTV.el_nextHeader.innerHTML = next_header;
-            MusicHudTV.el_nextTitle.innerHTML = data.music_data.next.title + " - " + data.music_data.next_next.duration_pretty;
-            MusicHudTV.el_nextArtist.innerHTML = data.music_data.next.artist;
-            MusicHudTV.el_nextDanceStyleList.innerHTML = data.music_data.next.comment;
+            this.el_nextHeader.innerHTML = next_header;
+            this.el_nextTitle.innerHTML = data.music_data.next.title + " - " + data.music_data.next_next.duration_pretty;
+            this.el_nextArtist.innerHTML = data.music_data.next.artist;
+            this.el_nextDanceStyleList.innerHTML = data.music_data.next.comment;
 
-            MusicHudTV.el_nextNextSongText.innerHTML = data.music_data.next_next.title + " " + data.music_data.next_next.duration_pretty + " <ul>" + data.music_data.next_next.comment + "</ul>";
+            this.el_nextNextSongText.innerHTML = data.music_data.next_next.title + " " + data.music_data.next_next.duration_pretty + " <ul>" + data.music_data.next_next.comment + "</ul>";
 
-            MusicHudTV.el_lower_third_message_text.innerHTML = lower_third_message_text;
+            this.el_lower_third_message_text.innerHTML = lower_third_message_text;
             //endregion text
             //..................................................................
         } catch (error) {
@@ -624,12 +618,13 @@ const MusicHudTV = {
                 "stack: '" + error.stack + "'"
             );
 
-            clearInterval(MusicHudTV.timer_update);
+            clearInterval(this.timer_update);
         }
-    },
+    }
 }
 
-MusicHudTV._initialize();
+let myMusicHudTV = new MusicHudTV()
+myMusicHudTV.start();
 
 </script>
 

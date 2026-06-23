@@ -21,7 +21,6 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: convert js MusicHudTV from singleton to class
 # TODO: time offset fixing
 # TODO: animated time bar
 # TODO: static lyrics
