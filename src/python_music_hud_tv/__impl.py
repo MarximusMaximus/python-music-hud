@@ -21,7 +21,6 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: time offset fixing
 # TODO: animated time bar
 # TODO: static lyrics
 # TODO: timed by line lyrics
@@ -41,6 +40,9 @@ from copy import (
 from dataclasses import (
     asdict,                         # as asdict,  # intentionally using short name
     dataclass,                      # as dataclass,  # intentionally using short name
+)
+from functools import (
+    lru_cache                       as functools_lru_cache,
 )
 from http import (
     HTTPStatus                      as http_HTTPStatus,
@@ -64,6 +66,7 @@ from threading import (
 )
 from time import (
     sleep                           as time_sleep,
+    time                            as time_time,
 )
 from typing import (
     Any,                            # as Any,  # intentionally using short name
@@ -109,15 +112,13 @@ class Track:
     title: str = ""
     artist: str = ""
     duration_in_seconds: int = 0
-    duration_pretty: str = ""
     grouping: str = ""
     comment: str = ""
 
 @dataclass
 class MusicData:
+    current_wall_unix_timestamp_ms: int
     current_play_head_time_in_seconds: int
-    current_play_head_time_pretty: str
-    current_play_head_time_and_length_pretty: str
     current_playlist_name: str
     current: Track
     next: Track
@@ -134,6 +135,7 @@ class PageData:
 
 Application = Any
 AppleMusicTrack = Any
+AppleMusicPlaylist = Any
 
 # pylint: disable=invalid-name
 html = str
@@ -153,7 +155,7 @@ APPLE_MUSIC_STATE_STOPPED = 1800426352
 
 DEFAULT_CONFIG = MusicHudConfig(
     server_port=8080,
-    updates_per_second=2,
+    updates_per_second=10,
     event_title_html="<br/>Mark<br/>&<br/>Sherry<br/>Wedding",
     background_color="#6E6856",
     foreground_color="#1d1b16",
@@ -183,15 +185,13 @@ EMPTY_TRACK_DATA_DICT = {
     "title": "",
     "artist": "",
     "duration_in_seconds": 0,
-    "duration_pretty": "",
     "grouping": "",
     "comment": "",
 }
 
 EMPTY_MUSIC_DATA_DICT = {
+    "current_wall_unix_timestamp_ms": 0,
     "current_play_head_time_in_seconds": 0,
-    "current_play_head_time_pretty": "",
-    "current_play_head_time_and_length_pretty": "",
     "current_playlist_name": "",
     "current": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
     "next": Track(**EMPTY_TRACK_DATA_DICT),  # type: ignore[arg-type]
@@ -203,8 +203,6 @@ EMPTY_MUSIC_DATA_DICT = {
 
 ################################################################################
 #region Globals
-
-g_app_apple_music: Any = SBApplication.applicationWithBundleIdentifier_("com.apple.Music")  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
 # fence for ignoring unused arguments in a function so as to not
 # ignore all unused arguments/variables in function
@@ -259,6 +257,11 @@ def getApp(name: str) -> Application:
     return SBApplication.applicationWithBundleIdentifier_(name)  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
 #-------------------------------------------------------------------------------
+def getAppleMusic() -> Application:
+    app_apple_music = getApp("com.apple.Music")
+    return app_apple_music
+
+#-------------------------------------------------------------------------------
 def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
 
     if track and track.name():
@@ -267,7 +270,6 @@ def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
             title=str(track.name()),
             artist=str(track.artist()),
             duration_in_seconds=length,
-            duration_pretty=durationInSecondsToPretty(length),
             grouping=str(track.grouping()),
             comment=str(track.comment()),
         )
@@ -277,76 +279,71 @@ def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
     return ret_track
 
 #-------------------------------------------------------------------------------
-def appleMusicGetPlaylistName() -> str:
+def appleMusicGetPlaylist(app_apple_music: Application) -> AppleMusicPlaylist:
+
+    app_apple_music_playlist = None
+    try:
+        app_apple_music_playlist = app_apple_music.currentPlaylist()
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error(e)
+
+    return app_apple_music_playlist
+
+#-------------------------------------------------------------------------------
+def appleMusicGetPlaylistName(playlist: AppleMusicPlaylist) -> str:
     ret_name = ""
 
-    app_apple_music = getApp("com.apple.Music")
-
     if (
-        app_apple_music is not None and
-        app_apple_music.isRunning() and
-        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
+        playlist is not None
     ):
-        app_apple_music_playlist = app_apple_music.currentPlaylist()
-        if app_apple_music_playlist:
-            ret_name = str(app_apple_music_playlist.name())
+        ret_name = str(playlist.name())
 
     return ret_name
 
 #-------------------------------------------------------------------------------
-def appleMusicGetCurrentPlayHeadTimeInSeconds() -> int:
+def appleMusicGetCurrentPlayHeadTimeInSeconds(
+    app_apple_music: Application,
+    current_track: AppleMusicTrack,
+) -> int:
     ret_time = 0
 
-    app_apple_music = getApp("com.apple.Music")
-
-    if (
-        app_apple_music is not None and
-        app_apple_music.isRunning() and
-        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
-    ):
+    try:
         raw_time = int(app_apple_music.playerPosition())
 
         # adjust raw_time by track start time b/c the track can start playing
         # from a time greater than 0, such as if skipping a long silence or intro
-        current_track = g_app_apple_music.currentTrack()
         current_start = int(current_track.start())
 
         cooked_time = raw_time - current_start
         ret_time = max(cooked_time, 0)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error(e)
 
     return ret_time
 
 #-------------------------------------------------------------------------------
-def appleMusicGetCurrentTrack() -> Track:
-    app_apple_music = getApp("com.apple.Music")
-
+def appleMusicGetCurrentAppleTrack(app_apple_music: Application) -> AppleMusicTrack:
     app_apple_music_track: AppleMusicTrack = None
-    if (
-        app_apple_music is not None and
-        app_apple_music.isRunning() and
-        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
-    ):
+    try:
         app_apple_music_track = app_apple_music.currentTrack()
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error(e)
 
-    ret_track = appleMusicTrackToOurTrack(app_apple_music_track)
-
-    return ret_track
+    return app_apple_music_track
 
 #-------------------------------------------------------------------------------
-def appleMusicGetNextTrack(offset: int = 1) -> Track:
-    app_apple_music = getApp("com.apple.Music")
+@functools_lru_cache()
+def appleMusicGetNextTrack(
+    current_playlist: AppleMusicPlaylist,
+    current_apple_track: AppleMusicTrack,
+    offset: int = 1,
+) -> AppleMusicTrack:
 
     app_apple_music_track: AppleMusicTrack = None
-    if (
-        app_apple_music is not None and
-        app_apple_music.isRunning() and
-        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
-    ):
-        app_apple_music_playlist = app_apple_music.currentPlaylist()
-        if app_apple_music_playlist:
-            current_track = g_app_apple_music.currentTrack()
-            current_index = current_track.index()
-            playlist_tracks = app_apple_music_playlist.tracks()
+    try:
+        if current_playlist:
+            current_index = current_apple_track.index()
+            playlist_tracks = current_playlist.tracks()
             next_index = current_index + 1
 
             loop_count = 0
@@ -355,6 +352,7 @@ def appleMusicGetNextTrack(offset: int = 1) -> Track:
                 if loop_count >= 100:
                     break
 
+                # TODO: explain this better
                 app_apple_music_track = playlist_tracks[next_index - 1]  # b/c playlist index is offset, first is index -1  # noqa: E501,B950
 
                 if app_apple_music_track is not None:
@@ -363,16 +361,15 @@ def appleMusicGetNextTrack(offset: int = 1) -> Track:
                     if app_apple_music_track.enabled():
                         offset = offset - 1
 
-                loop_count = loop_count + 1
                 if (
                     offset <= 0 or
                     app_apple_music_track is None
                 ):
                     break
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error(e)
 
-    ret_track = appleMusicTrackToOurTrack(app_apple_music_track)
-
-    return ret_track
+    return app_apple_music_track
 
 #-------------------------------------------------------------------------------
 def getMusicData() -> MusicData:
@@ -384,28 +381,40 @@ def getMusicData() -> MusicData:
 
     music_data = MusicData(**EMPTY_MUSIC_DATA_DICT)  # type: ignore[arg-type]
 
+    app_apple_music: Application = getAppleMusic()
+
     if (
-        g_app_apple_music is not None and
-        g_app_apple_music.isRunning() and
-        g_app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
+        app_apple_music is not None and
+        app_apple_music.isRunning() and
+        app_apple_music.playerState() == APPLE_MUSIC_STATE_PLAYING
     ):
-        # logger.debug("getting info from Apple Music App")
-        music_data.current = appleMusicGetCurrentTrack()
-        music_data.next = appleMusicGetNextTrack()
-        music_data.next_next = appleMusicGetNextTrack(offset=2)
+        current_playlist = appleMusicGetPlaylist(app_apple_music)
+        music_data.current_playlist_name = appleMusicGetPlaylistName(current_playlist)
+
+        current_apple_track = appleMusicGetCurrentAppleTrack(app_apple_music)
+        music_data.current = appleMusicTrackToOurTrack(current_apple_track)
         music_data.current_play_head_time_in_seconds = \
-            appleMusicGetCurrentPlayHeadTimeInSeconds()
-        music_data.current_playlist_name = appleMusicGetPlaylistName()
+            appleMusicGetCurrentPlayHeadTimeInSeconds(
+                app_apple_music,
+                current_apple_track,
+            )
+        music_data.current_wall_unix_timestamp_ms = int(time_time() * 1000)
 
-        music_data.current_play_head_time_pretty = \
-            durationInSecondsToPretty(music_data.current_play_head_time_in_seconds)
-
-        music_data.current_play_head_time_and_length_pretty = (
-            f'{music_data.current_play_head_time_pretty}/' +
-            f'{music_data.current.duration_pretty}'
+        next_apple_track = appleMusicGetNextTrack(
+            current_playlist=current_playlist,
+            current_apple_track=current_apple_track,
         )
+        music_data.next = appleMusicTrackToOurTrack(next_apple_track)
+
+        next_next_apple_track = appleMusicGetNextTrack(
+            current_playlist=current_playlist,
+            current_apple_track=current_apple_track,
+            offset=2,
+        )
+        music_data.next_next = appleMusicTrackToOurTrack(next_next_apple_track)
+
     else:
-        logger.debug("no music app playing")
+        logger.debug(msg="no music app playing")
 
     del pool
 
@@ -508,8 +517,8 @@ class MusicHudServer():
     #---------------------------------------------------------------------------
     def musicDataThread(self) -> None:
         """
-        _summary_
-        """
+        Function that is the Apple Music communication thread's run loop.
+        """  # noqa: D401
 
         pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
 
@@ -521,10 +530,13 @@ class MusicHudServer():
             buffer_index = (self.music_data_buffer_presentation_index + 1) % 2
             self.music_data_buffers[buffer_index] = new_music_data
             self.music_data_buffer_presentation_index = buffer_index
-            # TODO: rate limit to 1 per 500ms; takes variable length of time,
-            # so we cannot just sleep 0.5
+
+            # logger.debug(time_time())
+
+            # TODO: rate limit to 1 per 200ms; takes variable length of time,
+            # so we cannot just sleep 0.5...
+            # BUT it currently takes 250ms on M1 Max to run...
             time_sleep(0)
-            # os_sched_yield()
 
         logger.debug("musicDataThread stopped")
 
