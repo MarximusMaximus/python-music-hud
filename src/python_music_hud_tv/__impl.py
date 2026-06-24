@@ -118,7 +118,7 @@ class Track:
 @dataclass
 class MusicData:
     current_wall_unix_timestamp_ms: int
-    current_play_head_time_in_seconds: int
+    current_play_head_time_in_seconds: float
     current_playlist_name: str
     current: Track
     next: Track
@@ -265,7 +265,7 @@ def getAppleMusic() -> Application:
 def appleMusicTrackToOurTrack(track: AppleMusicTrack) -> Track:
 
     if track and track.name():
-        length = int(track.finish() - track.start())
+        length = (track.finish() - track.start())
         ret_track = Track(
             title=str(track.name()),
             artist=str(track.artist()),
@@ -304,18 +304,18 @@ def appleMusicGetPlaylistName(playlist: AppleMusicPlaylist) -> str:
 def appleMusicGetCurrentPlayHeadTimeInSeconds(
     app_apple_music: Application,
     current_track: AppleMusicTrack,
-) -> int:
-    ret_time = 0
+) -> float:
+    ret_time: float = 0
 
     try:
-        raw_time = int(app_apple_music.playerPosition())
+        raw_time = float(app_apple_music.playerPosition())
 
         # adjust raw_time by track start time b/c the track can start playing
         # from a time greater than 0, such as if skipping a long silence or intro
-        current_start = int(current_track.start())
+        current_start = float(current_track.start())
 
         cooked_time = raw_time - current_start
-        ret_time = max(cooked_time, 0)
+        ret_time = max(cooked_time, 0.0)
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error(e)
 
