@@ -81,7 +81,7 @@ batteries-forking-included = "python_music_hud_tv.__main__:scriptEntryPoint"
 [tool.poetry.group.dev.dependencies]
 pytest-cov = "^7.1.0"
 pipdeptree = "^3.1.0"
-tox = "^4.55.1"
+tox = "^4.56.0"
 pytest-sugar = "^1.1.1"
 mypy = "^2.1.0"
 Pygments = "^2.20.0"
