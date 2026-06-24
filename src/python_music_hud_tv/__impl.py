@@ -545,7 +545,7 @@ class MusicHudServer():
     #---------------------------------------------------------------------------
     def serverThread(self, handler_cls: Any) -> None:
         """
-        Function that is the server's thread's run loop.
+        Function that is the HTTP server's thread's run loop.
         """  # noqa: D401
 
         pool = NSAutoreleasePool.alloc().init()  # type: ignore[reportGeneralTypesIssues]  # pylint: disable=line-too-long  # noqa: E501,B950
