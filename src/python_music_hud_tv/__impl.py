@@ -21,7 +21,6 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: animated time bar
 # TODO: static lyrics
 # TODO: timed by line lyrics
 # TODO: timed by word lyrics
