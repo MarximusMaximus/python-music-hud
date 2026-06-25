@@ -2,6 +2,7 @@
 
 CURRENT_PYTHON_VERSION := 314
 OLDEST_PYTHON_VERSION  := 314
+MINIFORGE_VERSION := 26.1.1-3
 
 ifeq ($(OS),Windows_NT)
 	DETECTED_OS := Windows
@@ -22,14 +23,14 @@ test-makefile:
 
 .PHONY:
 install:  ### setup user environment
-	./bootstrap.sh --use-miniforge-version "26.1.1-3"
+	./bootstrap.sh --use-miniforge-version "$(MINIFORGE_VERSION)"
 
 .PHONY:
 setup: install
 
 .PHONY:
 install-dev:  ### setup development environment
-	./bootstrap.sh --dev --use-miniforge-version "26.1.1-3"
+	./bootstrap.sh --dev --use-miniforge-version "$(MINIFORGE_VERSION)"
 
 .PHONY:
 setup-dev: install-dev
