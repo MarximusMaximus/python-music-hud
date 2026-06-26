@@ -22,6 +22,7 @@ logger_log = logger.log
 ################################################################################
 
 # TODO: download lyrics?
+# TODO: parse lyrics
 # TODO: static lyrics
 # TODO: timed by line lyrics
 # TODO: timed by word lyrics
