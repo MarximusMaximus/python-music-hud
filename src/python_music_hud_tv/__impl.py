@@ -99,6 +99,7 @@ from Foundation import NSAutoreleasePool  # type: ignore[reportGeneralTypesIssue
 
 @dataclass
 class MusicHudConfig:
+    server_listen_address: str
     server_port: int
     updates_per_second: int
     event_title_html: str
@@ -156,6 +157,7 @@ APPLE_MUSIC_STATE_PLAYING = 1800426320
 APPLE_MUSIC_STATE_STOPPED = 1800426352
 
 DEFAULT_CONFIG = MusicHudConfig(
+    server_listen_address="localhost",
     server_port=8080,
     updates_per_second=10,
     event_title_html="<br/>Mark<br/>&<br/>Sherry<br/>Wedding",
@@ -555,7 +557,7 @@ class MusicHudServer():
         logger.debug("starting HTTP server")
 
         server = MusicHudHTTPServer(
-            server_address=("localhost", self.config.server_port),
+            server_address=(self.config.server_listen_address, self.config.server_port),
             RequestHandlerClass=handler_cls,
             config=self.config,
             server=self,
