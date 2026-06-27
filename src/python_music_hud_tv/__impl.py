@@ -21,11 +21,12 @@ logger_log = logger.log
 #endregion Python Library Preamble
 ################################################################################
 
-# TODO: download lyrics?
+# TODO: download lyrics? gamdl? liblrc?
 # TODO: parse lyrics
 # TODO: static lyrics
 # TODO: timed by line lyrics
 # TODO: timed by word lyrics
+# TODO: download & display album art
 # TODO: asyncio http server?
 # TODO: websockets?
 
