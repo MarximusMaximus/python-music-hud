@@ -106,6 +106,7 @@ class MusicHudConfig:
     background_color: str
     foreground_color: str
     secret_titles: list[str]
+    only_display_songs_for_specified_playlists: bool
     display_songs_for_playlists: list[str]
     gap_silence_title: str
     lower_third_message_songs: dict[str, str]
@@ -167,6 +168,7 @@ DEFAULT_CONFIG = MusicHudConfig(
         "Sherry",
         "Never Gonna Give You Up (7\" Mix)",
     ],
+    only_display_songs_for_specified_playlists=False,
     display_songs_for_playlists=[
         "9 Pre Dance - 30m (6:30p)",
         "10 Main Dance - 1h (8p)",

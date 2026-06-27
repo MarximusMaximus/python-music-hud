@@ -616,6 +616,7 @@ class MusicHudTV {
             //..................................................................
             //region title card
             if (
+                this.config.only_display_songs_for_specified_playlists === true &&
                 this.config.display_songs_for_playlists.includes(
                     data.music_data.current_playlist_name
                 ) == false ||
