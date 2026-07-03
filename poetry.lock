@@ -1789,14 +1789,14 @@ dev = ["docutils (>=0.19)", "mypy", "pip-tools", "pypandoc", "pytest-cov", "pyte
 
 [[package]]
 name = "pipdeptree"
-version = "3.1.0"
+version = "3.1.1"
 description = "Command line utility to show dependency tree of packages."
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "pipdeptree-3.1.0-py3-none-any.whl", hash = "sha256:8b525aa1d0ef96dbe8a95b9f526984ed6d055a9c2035a48d33c8bb57bbfc585a"},
-    {file = "pipdeptree-3.1.0.tar.gz", hash = "sha256:52ecadd6e0dd95aaf61e83ed2810a9ba6af3154482583149d0e8bb0c1b6d7c46"},
+    {file = "pipdeptree-3.1.1-py3-none-any.whl", hash = "sha256:1873ba077ae8faf656257357dbe88b9e09f85d63891355b48b93600ab819f479"},
+    {file = "pipdeptree-3.1.1.tar.gz", hash = "sha256:a986376399e52c9ec7515ef69df7a2dbda0bae0be1cec90dcae23a4ba6262c89"},
 ]
 
 [package.dependencies]
@@ -6611,4 +6611,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<4.0"
-content-hash = "a1a500e9e3114744d9a3c1a0c05488a7035f019d87db64f8507c55160a49d942"
+content-hash = "0e770bfafbc27a9968ba06f65e97d8f8a513a589a6d7ab1d7a7cc876fc19acfd"
